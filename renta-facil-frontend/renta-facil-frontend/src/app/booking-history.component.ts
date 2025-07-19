@@ -12,7 +12,7 @@ import { MatChipsModule } from '@angular/material/chips';
 @Component({
   selector: 'app-booking-history',
   standalone: true,
-  imports: [MatCardModule, CommonModule, DatePipe, MatIconModule, MatButtonModule, MatChipsModule],
+  imports: [CommonModule, MatCardModule, MatIconModule, MatChipsModule],
   template: `
     <mat-card class="booking-history-card">
       <mat-card-title>Historial de Reservas</mat-card-title>

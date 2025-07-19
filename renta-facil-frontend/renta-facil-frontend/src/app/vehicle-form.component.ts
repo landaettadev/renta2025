@@ -8,11 +8,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { Vehicle } from './core/services/vehicle.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-vehicle-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
   template: `
     <h2 mat-dialog-title>{{ data?.id ? 'Editar Vehículo' : 'Agregar Vehículo' }}</h2>
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="vehicle-form-modal">
@@ -80,7 +81,7 @@ export class VehicleFormComponent {
   constructor(
     private fb: FormBuilder,
     public dialogRef: MatDialogRef<VehicleFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: Partial<Vehicle> | null
+    @Inject(MAT_DIALOG_DATA) public data: (Partial<Vehicle> & { loading?: boolean }) | null
   ) {
     this.form = this.fb.group({
       id: [data?.id],
