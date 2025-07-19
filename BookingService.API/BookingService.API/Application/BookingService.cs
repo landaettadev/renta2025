@@ -33,7 +33,7 @@ namespace BookingService.API.Application
                 ClientId = bookingDto.ClientId,
                 StartDate = bookingDto.StartDate,
                 EndDate = bookingDto.EndDate,
-                Status = "Active"
+                Estado = RentaFacil.Shared.EstadoReserva.Pendiente
             };
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
@@ -64,7 +64,31 @@ namespace BookingService.API.Application
                 ClientId = b.ClientId,
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
-                Status = b.Status
+                Estado = b.Estado
+            }).ToList();
+        }
+
+        public async Task<bool> CancelBookingAsync(int bookingId, int userId)
+        {
+            var booking = await _context.Bookings.FindAsync(bookingId);
+            if (booking == null || booking.ClientId != userId) return false;
+            booking.Estado = RentaFacil.Shared.EstadoReserva.Cancelada;
+            await _context.SaveChangesAsync();
+            _logger.LogInformation($"Reserva {bookingId} cancelada por usuario {userId}");
+            return true;
+        }
+
+        public async Task<List<BookingDto>> GetAllBookingsAsync()
+        {
+            var bookings = await _context.Bookings.OrderByDescending(b => b.CreatedAt).ToListAsync();
+            return bookings.Select(b => new BookingDto
+            {
+                Id = b.Id,
+                VehicleId = b.VehicleId,
+                ClientId = b.ClientId,
+                StartDate = b.StartDate,
+                EndDate = b.EndDate,
+                Estado = b.Estado
             }).ToList();
         }
     }

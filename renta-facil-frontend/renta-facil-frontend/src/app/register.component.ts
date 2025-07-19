@@ -61,9 +61,22 @@ export class RegisterComponent {
     this.success = false;
     this.auth.register(this.nombre, this.email, this.password).subscribe({
       next: () => {
-        this.loading = false;
-        this.success = true;
-        setTimeout(() => this.router.navigate(['/login']), 1500);
+        // Login automático tras registro
+        this.auth.login(this.email, this.password).subscribe({
+          next: (res) => {
+            this.auth.setToken(res.token);
+            const role = this.auth.getRole();
+            if (role === 'Admin') {
+              this.router.navigate(['/admin']);
+            } else {
+              this.router.navigate(['/perfil']);
+            }
+          },
+          error: () => {
+            this.success = true;
+            setTimeout(() => this.router.navigate(['/login']), 1500);
+          }
+        });
       },
       error: (err) => {
         this.loading = false;

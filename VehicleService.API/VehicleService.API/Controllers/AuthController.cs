@@ -52,6 +52,42 @@ namespace VehicleService.API.Controllers
             return Ok(new { token, usuario = new { usuario.Id, usuario.Nombre, usuario.Email, usuario.Rol } });
         }
 
+        [HttpGet("all")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var usuarios = await _context.Usuarios
+                .Select(u => new { u.Id, u.Nombre, u.Email, u.Rol })
+                .ToListAsync();
+            return Ok(usuarios);
+        }
+
+        [HttpPut("{id}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UsuarioRegistroDto dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return NotFound();
+            usuario.Nombre = dto.Nombre;
+            usuario.Email = dto.Email;
+            if (!string.IsNullOrWhiteSpace(dto.Password))
+                usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            usuario.Rol = dto.Rol ?? usuario.Rol;
+            await _context.SaveChangesAsync();
+            return Ok(new { usuario.Id, usuario.Nombre, usuario.Email, usuario.Rol });
+        }
+
+        [HttpDelete("{id}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return NotFound();
+            _context.Usuarios.Remove(usuario);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         private string GenerarJwt(Usuario usuario)
         {
             var claims = new[]

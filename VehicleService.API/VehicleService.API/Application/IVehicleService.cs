@@ -9,5 +9,7 @@ namespace VehicleService.API.Application
     {
         Task<int> RegisterVehicleAsync(VehicleDto vehicleDto);
         Task<List<VehicleDto>> GetAvailableVehiclesAsync(string type, DateTime startDate, DateTime endDate);
+        Task<List<VehicleDto>> GetAllVehiclesAsync();
+        Task<bool> DeleteVehicleAsync(int id);
     }
 } 

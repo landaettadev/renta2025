@@ -51,5 +51,30 @@ namespace VehicleService.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllVehicles()
+        {
+            var vehicles = await _vehicleService.GetAllVehiclesAsync();
+            return Ok(vehicles);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteVehicle(int id)
+        {
+            try
+            {
+                var vehicle = await _vehicleService.DeleteVehicleAsync(id);
+                if (!vehicle)
+                    return NotFound();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al eliminar vehículo");
+                return BadRequest(ex.Message);
+            }
+        }
     }
 } 

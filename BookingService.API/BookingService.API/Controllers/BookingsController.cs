@@ -51,6 +51,22 @@ namespace BookingService.API.Controllers
             }
         }
 
+        [HttpPost("cancel")]
+        public async Task<IActionResult> CancelBooking([FromBody] RentaFacil.Shared.CancelarReservaDto dto)
+        {
+            try
+            {
+                var result = await _bookingService.CancelBookingAsync(dto.ReservaId, dto.UsuarioId);
+                if (!result) return NotFound("Reserva no encontrada o no autorizada");
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al cancelar reserva");
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("history/{clientId}")]
         public async Task<IActionResult> GetBookingHistory(int clientId)
         {
@@ -62,6 +78,22 @@ namespace BookingService.API.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al consultar historial");
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllBookings()
+        {
+            try
+            {
+                var bookings = await _bookingService.GetAllBookingsAsync();
+                return Ok(bookings);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener reservas");
                 return BadRequest(ex.Message);
             }
         }

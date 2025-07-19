@@ -17,4 +17,12 @@ export class BookingService {
   getHistory(clientId: number): Observable<Booking[]> {
     return this.http.get<Booking[]>(`${this.apiUrl}/history/${clientId}`);
   }
+
+  getAll(): Observable<Booking[]> {
+    return this.http.get<Booking[]>(this.apiUrl);
+  }
+
+  cancel(bookingId: number, userId: number) {
+    return this.http.post(`${this.apiUrl}/cancel`, { reservaId: bookingId, usuarioId: userId });
+  }
 } 

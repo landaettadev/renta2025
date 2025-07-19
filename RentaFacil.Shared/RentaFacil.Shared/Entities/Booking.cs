@@ -10,6 +10,6 @@ namespace RentaFacil.Shared.Entities
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public string Status { get; set; } = "Active"; // Active, Cancelled, Completed
+        public EstadoReserva Estado { get; set; } = EstadoReserva.Pendiente;
     }
 } 

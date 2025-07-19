@@ -18,6 +18,7 @@ export class AuthService {
   private tokenKey = 'rf_token';
   private userSubject = new BehaviorSubject<any>(this.getUserFromToken());
   user$ = this.userSubject.asObservable();
+  private apiUrl = `${environment.apiVehicle.replace('/api/vehicles','')}/api/auth`;
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -52,8 +53,10 @@ export class AuthService {
     const token = this.getToken();
     if (!token) return null;
     try {
-      const payload = jwtDecode<JwtPayload>(token);
-      return { id: payload.sub, email: payload.email, nombre: payload.nombre, rol: payload.role };
+      const payload = jwtDecode<any>(token);
+      // Extraer el rol del claim estándar o del claim de Microsoft
+      const role = payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+      return { id: payload.sub, email: payload.email, nombre: payload.nombre, role };
     } catch {
       return null;
     }
@@ -61,6 +64,18 @@ export class AuthService {
 
   getRole(): string | null {
     const user = this.getUserFromToken();
-    return user?.rol || null;
+    return user?.role || null;
+  }
+
+  getAllUsers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/all`);
+  }
+
+  updateUser(id: number, data: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, data);
+  }
+
+  deleteUser(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 } 

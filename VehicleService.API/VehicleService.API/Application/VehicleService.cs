@@ -28,7 +28,8 @@ namespace VehicleService.API.Application
                 Brand = vehicleDto.Brand,
                 Model = vehicleDto.Model,
                 Type = vehicleDto.Type,
-                IsAvailable = true
+                IsAvailable = true,
+                Image = vehicleDto.Image // <--- Asignar imagen
             };
             _context.Vehicles.Add(vehicle);
             await _context.SaveChangesAsync();
@@ -51,6 +52,31 @@ namespace VehicleService.API.Application
                 Type = v.Type,
                 IsAvailable = v.IsAvailable
             }).ToList();
+        }
+
+        public async Task<List<VehicleDto>> GetAllVehiclesAsync()
+        {
+            var vehicles = await _context.Vehicles.ToListAsync();
+            return vehicles.Select(v => new VehicleDto
+            {
+                Id = v.Id,
+                LicensePlate = v.LicensePlate,
+                Brand = v.Brand,
+                Model = v.Model,
+                Type = v.Type,
+                IsAvailable = v.IsAvailable,
+                Image = v.Image
+            }).ToList();
+        }
+
+        public async Task<bool> DeleteVehicleAsync(int id)
+        {
+            var vehicle = await _context.Vehicles.FindAsync(id);
+            if (vehicle == null)
+                return false;
+            _context.Vehicles.Remove(vehicle);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 } 

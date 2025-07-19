@@ -12,27 +12,27 @@ import { CommonModule } from '@angular/common';
   imports: [RouterModule, MatToolbarModule, MatButtonModule, CommonModule],
   template: `
     <mat-toolbar color="primary" class="navbar">
-      <span class="logo">
+      <span class="logo" (click)="goHome()" style="cursor:pointer;">
         <span class="car-icon">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="4" y="14" width="24" height="8" rx="4" fill="#fff" stroke="#1976d2" stroke-width="2"/>
-            <circle cx="9" cy="24" r="3" fill="#1976d2"/>
-            <circle cx="23" cy="24" r="3" fill="#1976d2"/>
-            <rect x="8" y="10" width="16" height="6" rx="3" fill="#1976d2"/>
+            <rect x="4" y="14" width="24" height="8" rx="4" fill="#fff" stroke="#ff9800" stroke-width="2"/>
+            <circle cx="9" cy="24" r="3" fill="#ff9800"/>
+            <circle cx="23" cy="24" r="3" fill="#ff9800"/>
+            <rect x="8" y="10" width="16" height="6" rx="3" fill="#ff9800"/>
           </svg>
         </span>
         <span class="brand">RentaFácil</span>
       </span>
       <span class="spacer"></span>
-      <a mat-button routerLink="/" routerLinkActive="active">Inicio</a>
+      <a mat-button routerLink="/" [ngClass]="{active: isActive('/')}">Inicio</a>
       <ng-container *ngIf="!isLoggedIn">
-        <a mat-button routerLink="/login" routerLinkActive="active">Iniciar sesión</a>
-        <a mat-button routerLink="/register" routerLinkActive="active">Registrarse</a>
+        <a mat-button routerLink="/login" [ngClass]="{active: isActive('/login')}">Iniciar sesión</a>
+        <a mat-button routerLink="/register" [ngClass]="{active: isActive('/register')}">Registrarse</a>
       </ng-container>
       <ng-container *ngIf="isLoggedIn">
-        <a mat-button routerLink="/perfil" routerLinkActive="active">Perfil</a>
-        <a mat-button routerLink="/reservas" routerLinkActive="active">Mis reservas</a>
-        <a *ngIf="isAdmin" mat-button routerLink="/admin" routerLinkActive="active">Admin</a>
+        <a mat-button routerLink="/perfil" [ngClass]="{active: isActive('/perfil')}">Perfil</a>
+        <a mat-button routerLink="/reservas" [ngClass]="{active: isActive('/reservas')}">Mis reservas</a>
+        <a *ngIf="isAdmin" mat-button routerLink="/admin" [ngClass]="{active: isActive('/admin')}">Admin</a>
         <button mat-button (click)="logout()">Salir</button>
       </ng-container>
     </mat-toolbar>
@@ -43,8 +43,8 @@ import { CommonModule } from '@angular/common';
     .car-icon { margin-right: 8px; display: flex; align-items: center; }
     .brand { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.6rem; color: #fff; }
     .spacer { flex: 1 1 auto; }
-    a[mat-button] { color: #fff; font-weight: 600; font-family: 'Montserrat', sans-serif; }
-    a.active { border-bottom: 2px solid #fff; }
+    a[mat-button] { color: #fff; font-weight: 600; font-family: 'Montserrat', sans-serif; border-bottom: 2px solid transparent; }
+    a.active { border-bottom: 2px solid #ff9800 !important; background: none !important; }
     @media (max-width: 600px) {
       .brand { font-size: 1.1rem; }
       .logo { font-size: 1.1rem; }
@@ -58,10 +58,16 @@ export class NavbarComponent {
   constructor(public auth: AuthService, private router: Router) {
     this.auth.user$.subscribe(user => {
       this.isLoggedIn = !!user;
-      this.isAdmin = user?.rol === 'Admin';
+      this.isAdmin = user?.role === 'Admin';
     });
   }
   logout() {
     this.auth.logout();
+  }
+  isActive(path: string): boolean {
+    return this.router.url === path || (path !== '/' && this.router.url.startsWith(path));
+  }
+  goHome() {
+    this.router.navigate(['/']);
   }
 } 

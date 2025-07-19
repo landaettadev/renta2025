@@ -33,4 +33,8 @@ export class VehicleService {
   register(vehicle: Vehicle): Observable<any> {
     return this.http.post(this.apiUrl, vehicle);
   }
+
+  delete(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`);
+  }
 } 

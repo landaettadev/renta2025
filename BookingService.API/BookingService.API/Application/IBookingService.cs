@@ -9,5 +9,7 @@ namespace BookingService.API.Application
         Task<int> CreateBookingAsync(BookingDto bookingDto);
         Task<bool> AssignClientAsync(int bookingId, int clientId);
         Task<List<BookingDto>> GetBookingHistoryByClientAsync(int clientId);
+        Task<bool> CancelBookingAsync(int bookingId, int userId);
+        Task<List<BookingDto>> GetAllBookingsAsync();
     }
 } 

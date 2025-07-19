@@ -7,12 +7,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { VehicleService, Vehicle } from './core/services/vehicle.service';
 
 @Component({
   selector: 'app-admin-vehicles',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatListModule, MatSelectModule],
+  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatListModule, MatSelectModule, MatIconModule, MatSnackBarModule],
   template: `
     <mat-card class="admin-vehicle-card">
       <mat-card-title>Agregar Vehículo</mat-card-title>
@@ -62,6 +64,8 @@ import { VehicleService, Vehicle } from './core/services/vehicle.service';
         <mat-list-item *ngFor="let v of vehicles">
           <img [src]="v.image || 'https://cdn.pixabay.com/photo/2012/05/29/00/43/car-49278_1280.jpg'" width="60" height="40" style="object-fit:cover; margin-right:12px; border-radius:4px;" />
           <span>{{ v.brand }} {{ v.model }} ({{ v.type }}) - Placa: {{ v.licensePlate }} - <span [ngClass]="{'disponible': v.isAvailable, 'nodisponible': !v.isAvailable}">{{ v.isAvailable ? 'Disponible' : 'No disponible' }}</span></span>
+          <button mat-icon-button color="primary" (click)="toggleDisponibilidad(v)"><mat-icon>{{ v.isAvailable ? 'toggle_on' : 'toggle_off' }}</mat-icon></button>
+          <button mat-icon-button color="warn" (click)="deleteVehicle(v)"><mat-icon>delete</mat-icon></button>
         </mat-list-item>
       </mat-list>
     </mat-card>
@@ -86,7 +90,7 @@ export class AdminVehiclesComponent implements OnInit {
   loading = false;
   error = '';
   success = false;
-  constructor(private vehicleService: VehicleService) {}
+  constructor(private vehicleService: VehicleService, private snackBar: MatSnackBar) {}
   ngOnInit() {
     this.loadVehicles();
   }
@@ -121,6 +125,27 @@ export class AdminVehiclesComponent implements OnInit {
         this.vehicle.image = e.target.result;
       };
       reader.readAsDataURL(file);
+    }
+  }
+  toggleDisponibilidad(v: Vehicle) {
+    const updated = { ...v, isAvailable: !v.isAvailable };
+    this.vehicleService.register(updated).subscribe({
+      next: () => {
+        this.snackBar.open('Disponibilidad actualizada', 'Cerrar', { duration: 2000 });
+        this.loadVehicles();
+      },
+      error: () => this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 2000 })
+    });
+  }
+  deleteVehicle(v: Vehicle) {
+    if (confirm('¿Seguro que deseas eliminar este vehículo?')) {
+      this.vehicleService.delete(v.id).subscribe({
+        next: () => {
+          this.snackBar.open('Vehículo eliminado', 'Cerrar', { duration: 2000 });
+          this.loadVehicles();
+        },
+        error: () => this.snackBar.open('Error al eliminar', 'Cerrar', { duration: 2000 })
+      });
     }
   }
 } 
