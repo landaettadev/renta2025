@@ -82,6 +82,21 @@ namespace BookingService.API.Controllers
             }
         }
 
+        [HttpGet("history/{clientId}/details")]
+        public async Task<IActionResult> GetBookingHistoryWithDetails(int clientId)
+        {
+            try
+            {
+                var details = await _bookingService.GetBookingHistoryWithVehicleDetailsAsync(clientId);
+                return Ok(details);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al consultar historial con detalles");
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet]
         [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllBookings()

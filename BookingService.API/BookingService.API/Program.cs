@@ -56,6 +56,13 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<BookingService.API.Application.IBookingService, BookingService.API.Application.BookingService>();
 
+// Registrar HttpClient para VehicleService
+builder.Services.AddHttpClient("VehicleService", (sp, client) =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    client.BaseAddress = new Uri(config["VehicleService:BaseUrl"]!);
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>

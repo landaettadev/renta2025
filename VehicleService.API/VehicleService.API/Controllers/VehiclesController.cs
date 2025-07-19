@@ -9,6 +9,8 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using MediatR;
+using VehicleService.API.Application.Features.Vehicles;
 
 namespace VehicleService.API.Controllers
 {
@@ -16,13 +18,13 @@ namespace VehicleService.API.Controllers
     [Route("api/[controller]")]
     public class VehiclesController : ControllerBase
     {
-        private readonly IVehicleService _vehicleService;
+        private readonly IMediator _mediator;
         private readonly ILogger<VehiclesController> _logger;
         private readonly IConfiguration _configuration;
 
-        public VehiclesController(IVehicleService vehicleService, ILogger<VehiclesController> logger, IConfiguration configuration)
+        public VehiclesController(IMediator mediator, ILogger<VehiclesController> logger, IConfiguration configuration)
         {
-            _vehicleService = vehicleService;
+            _mediator = mediator;
             _logger = logger;
             _configuration = configuration;
         }
@@ -48,8 +50,17 @@ namespace VehicleService.API.Controllers
                     }
                     vehicleDto.Image = $"{containerUrl}/{blobName}";
                 }
-                var vehicleId = await _vehicleService.RegisterVehicleAsync(vehicleDto);
-                return Ok(new { VehicleId = vehicleId });
+                var command = new CreateVehicleCommand
+                {
+                    LicensePlate = vehicleDto.LicensePlate,
+                    Brand = vehicleDto.Brand,
+                    Model = vehicleDto.Model,
+                    Type = vehicleDto.Type,
+                    IsAvailable = vehicleDto.IsAvailable,
+                    Image = vehicleDto.Image
+                };
+                var created = await _mediator.Send(command);
+                return Ok(new { VehicleId = created.Id });
             }
             catch (Exception ex)
             {
@@ -63,12 +74,8 @@ namespace VehicleService.API.Controllers
         {
             try
             {
-                // Si no se envían fechas, pasar default
-                var vehicles = await _vehicleService.GetAvailableVehiclesAsync(
-                    type,
-                    startDate ?? default,
-                    endDate ?? default
-                );
+                var query = new GetAvailableVehiclesQuery(type, startDate, endDate);
+                var vehicles = await _mediator.Send(query);
                 return Ok(vehicles);
             }
             catch (Exception ex)
@@ -81,7 +88,7 @@ namespace VehicleService.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllVehicles()
         {
-            var vehicles = await _vehicleService.GetAllVehiclesAsync();
+            var vehicles = await _mediator.Send(new GetAllVehiclesQuery());
             return Ok(vehicles);
         }
 
@@ -91,7 +98,17 @@ namespace VehicleService.API.Controllers
         {
             try
             {
-                var updated = await _vehicleService.UpdateVehicleAsync(id, vehicleDto);
+                var command = new UpdateVehicleCommand
+                {
+                    Id = id,
+                    LicensePlate = vehicleDto.LicensePlate,
+                    Brand = vehicleDto.Brand,
+                    Model = vehicleDto.Model,
+                    Type = vehicleDto.Type,
+                    IsAvailable = vehicleDto.IsAvailable,
+                    Image = vehicleDto.Image
+                };
+                var updated = await _mediator.Send(command);
                 if (!updated)
                     return NotFound();
                 return Ok();
@@ -109,7 +126,8 @@ namespace VehicleService.API.Controllers
         {
             try
             {
-                var vehicle = await _vehicleService.DeleteVehicleAsync(id);
+                var command = new DeleteVehicleCommand { Id = id };
+                var vehicle = await _mediator.Send(command);
                 if (!vehicle)
                     return NotFound();
                 return NoContent();

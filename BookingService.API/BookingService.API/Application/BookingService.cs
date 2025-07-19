@@ -7,6 +7,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net.Http;
+using System.Text.Json;
+using RentaFacil.Shared.DTOs;
 
 namespace BookingService.API.Application
 {
@@ -14,11 +17,13 @@ namespace BookingService.API.Application
     {
         private readonly BookingDbContext _context;
         private readonly ILogger<BookingService> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public BookingService(BookingDbContext context, ILogger<BookingService> logger)
+        public BookingService(BookingDbContext context, ILogger<BookingService> logger, IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<int> CreateBookingAsync(BookingDto bookingDto)
@@ -90,6 +95,47 @@ namespace BookingService.API.Application
                 EndDate = b.EndDate,
                 Estado = b.Estado
             }).ToList();
+        }
+
+        public async Task<List<BookingDetailDto>> GetBookingHistoryWithVehicleDetailsAsync(int clientId)
+        {
+            var bookings = await _context.Bookings
+                .Where(b => b.ClientId == clientId)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync();
+            var client = _httpClientFactory.CreateClient("VehicleService");
+            var result = new List<BookingDetailDto>();
+            foreach (var b in bookings)
+            {
+                try
+                {
+                    var response = await client.GetAsync($"api/vehicles/{b.VehicleId}");
+                    response.EnsureSuccessStatusCode();
+                    var json = await response.Content.ReadAsStringAsync();
+                    var vehicle = JsonSerializer.Deserialize<VehicleDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    result.Add(new BookingDetailDto
+                    {
+                        Id = b.Id,
+                        VehicleId = b.VehicleId,
+                        ClientId = b.ClientId,
+                        StartDate = b.StartDate,
+                        EndDate = b.EndDate,
+                        Status = b.Estado.ToString(),
+                        Estado = b.Estado,
+                        VehicleBrand = vehicle?.Brand ?? string.Empty,
+                        VehicleModel = vehicle?.Model ?? string.Empty,
+                        VehicleType = vehicle?.Type ?? string.Empty,
+                        VehicleLicensePlate = vehicle?.LicensePlate ?? string.Empty,
+                        VehicleImage = vehicle?.Image,
+                        VehiclePricePerDay = 0 // Si tienes este dato, asígnalo aquí
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Error obteniendo detalles del vehículo {b.VehicleId}");
+                }
+            }
+            return result;
         }
     }
 } 
