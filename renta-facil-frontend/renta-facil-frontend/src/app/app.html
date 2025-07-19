@@ -1,18 +1,15 @@
-            <mat-toolbar color="primary">
-              <span>RentaFácil</span>
-              <span class="spacer"></span>
-              <a mat-button routerLink="/vehicles">Buscar Vehículos</a>
-              <a mat-button routerLink="/bookings/create">Crear Reserva</a>
-              <a mat-button routerLink="/bookings/history">Historial de Reservas</a>
-            </mat-toolbar>
+<app-navbar></app-navbar>
 
 <div class="main-content">
   <router-outlet></router-outlet>
 </div>
 
-            <style>
-            .spacer { flex: 1 1 auto; }
-            .main-content { padding: 24px; }
-            a[mat-button] { color: white; text-decoration: none; }
-            a[mat-button]:hover { background-color: rgba(255,255,255,0.1); }
-            </style>
+<app-footer></app-footer>
+
+<style>
+.main-content {
+  padding: 24px;
+  min-height: calc(100vh - 120px);
+  box-sizing: border-box;
+}
+</style>

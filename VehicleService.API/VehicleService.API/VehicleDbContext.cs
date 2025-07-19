@@ -8,5 +8,6 @@ namespace VehicleService.API
         public VehicleDbContext(DbContextOptions<VehicleDbContext> options) : base(options) { }
 
         public DbSet<Vehicle> Vehicles { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
     }
 } 

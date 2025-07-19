@@ -1,4 +1,30 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html, body {
+  height: 100%;
+  font-family: 'Montserrat', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #f7f9fb;
+}
+
+body {
+  margin: 0;
+  color: #222;
+}
+
+.mat-toolbar {
+  font-family: 'Montserrat', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.mat-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.mat-button, .mat-raised-button {
+  font-family: 'Montserrat', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+}
+
+footer {
+  font-family: 'Montserrat', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}

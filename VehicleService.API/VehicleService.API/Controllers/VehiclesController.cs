@@ -4,6 +4,7 @@ using RentaFacil.Shared.DTOs;
 using System;
 using System.Threading.Tasks;
 using VehicleService.API.Application;
+using Microsoft.AspNetCore.Authorization;
 
 namespace VehicleService.API.Controllers
 {
@@ -21,6 +22,7 @@ namespace VehicleService.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RegisterVehicle([FromBody] VehicleDto vehicleDto)
         {
             try

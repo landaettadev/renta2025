@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiVehicle: 'http://localhost:5280/api/vehicles', // Cambia el puerto según tu backend
+  apiVehicle: 'http://localhost:5277/api/vehicles',
   apiBooking: 'http://localhost:5216/api/bookings'
 }; 
