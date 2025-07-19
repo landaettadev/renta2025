@@ -30,8 +30,17 @@ export class VehicleService {
     return this.http.get<Vehicle[]>(this.apiUrl);
   }
 
-  register(vehicle: Vehicle): Observable<any> {
-    return this.http.post(this.apiUrl, vehicle);
+  register(vehicle: any, imageFile?: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('brand', vehicle.brand);
+    formData.append('model', vehicle.model);
+    formData.append('type', vehicle.type);
+    formData.append('licensePlate', vehicle.licensePlate);
+    formData.append('isAvailable', vehicle.isAvailable);
+    if (imageFile) {
+      formData.append('imageFile', imageFile, imageFile.name);
+    }
+    return this.http.post(this.apiUrl, formData);
   }
 
   delete(id: number): Observable<any> {

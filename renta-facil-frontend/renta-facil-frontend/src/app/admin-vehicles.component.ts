@@ -240,6 +240,7 @@ export class AdminVehiclesComponent implements OnInit {
   loading = false;
   error = '';
   success = false;
+  imageFile: File | null = null;
   constructor(private vehicleService: VehicleService, private snackBar: MatSnackBar) {}
   ngOnInit() {
     this.loadVehicles();
@@ -254,11 +255,12 @@ export class AdminVehiclesComponent implements OnInit {
     this.loading = true;
     this.error = '';
     this.success = false;
-    this.vehicleService.register(this.vehicle as Vehicle).subscribe({
+    this.vehicleService.register(this.vehicle, this.imageFile || undefined).subscribe({
       next: () => {
         this.loading = false;
         this.success = true;
         this.vehicle = { isAvailable: true };
+        this.imageFile = null;
         this.loadVehicles();
       },
       error: (err) => {
@@ -270,6 +272,7 @@ export class AdminVehiclesComponent implements OnInit {
   onFileChange(event: any) {
     const file = event.target.files[0];
     if (file) {
+      this.imageFile = file;
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.vehicle.image = e.target.result;

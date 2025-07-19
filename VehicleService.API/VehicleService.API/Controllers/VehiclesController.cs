@@ -5,6 +5,10 @@ using System;
 using System.Threading.Tasks;
 using VehicleService.API.Application;
 using Microsoft.AspNetCore.Authorization;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace VehicleService.API.Controllers
 {
@@ -14,19 +18,36 @@ namespace VehicleService.API.Controllers
     {
         private readonly IVehicleService _vehicleService;
         private readonly ILogger<VehiclesController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public VehiclesController(IVehicleService vehicleService, ILogger<VehiclesController> logger)
+        public VehiclesController(IVehicleService vehicleService, ILogger<VehiclesController> logger, IConfiguration configuration)
         {
             _vehicleService = vehicleService;
             _logger = logger;
+            _configuration = configuration;
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> RegisterVehicle([FromBody] VehicleDto vehicleDto)
+        public async Task<IActionResult> RegisterVehicle([FromForm] VehicleDto vehicleDto, [FromForm] IFormFile? imageFile)
         {
             try
             {
+                // Subir imagen a Azure Blob Storage si se envía
+                if (imageFile != null && imageFile.Length > 0)
+                {
+                    var containerUrl = _configuration["AzureBlob:ContainerUrl"];
+                    var sasToken = _configuration["AzureBlob:SasToken"];
+                    var blobName = $"{Guid.NewGuid()}_{imageFile.FileName}";
+                    var blobUri = $"{containerUrl}/{blobName}?{sasToken}";
+                    _logger.LogError($"Blob URI: {blobUri}");
+                    var blobClient = new BlockBlobClient(new Uri(blobUri));
+                    using (var stream = imageFile.OpenReadStream())
+                    {
+                        await blobClient.UploadAsync(stream);
+                    }
+                    vehicleDto.Image = $"{containerUrl}/{blobName}";
+                }
                 var vehicleId = await _vehicleService.RegisterVehicleAsync(vehicleDto);
                 return Ok(new { VehicleId = vehicleId });
             }
