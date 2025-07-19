@@ -7,6 +7,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Cargar user-secrets solo en entorno Development
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>();
+}
+
 // Add services to the container.
 
 builder.Services.AddControllers();
