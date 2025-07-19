@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 
@@ -52,7 +52,10 @@ export class VehicleService {
   }
 
   getFiltered(type: string = '', startDate: string = '', endDate: string = ''): Observable<Vehicle[]> {
-    const tipo = (!type || type === 'Todos') ? '' : type;
-    return this.http.get<Vehicle[]>(`${this.apiUrl}/available?type=${tipo}&startDate=${startDate}&endDate=${endDate}`);
+    let params = new HttpParams();
+    if (type && type !== 'Todos') params = params.set('type', type);
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
+    return this.http.get<Vehicle[]>(`${this.apiUrl}/available`, { params });
   }
 } 

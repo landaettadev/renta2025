@@ -59,11 +59,16 @@ namespace VehicleService.API.Controllers
         }
 
         [HttpGet("available")]
-        public async Task<IActionResult> GetAvailableVehicles([FromQuery] string type, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        public async Task<IActionResult> GetAvailableVehicles([FromQuery] string? type, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
         {
             try
             {
-                var vehicles = await _vehicleService.GetAvailableVehiclesAsync(type, startDate, endDate);
+                // Si no se envían fechas, pasar default
+                var vehicles = await _vehicleService.GetAvailableVehiclesAsync(
+                    type,
+                    startDate ?? default,
+                    endDate ?? default
+                );
                 return Ok(vehicles);
             }
             catch (Exception ex)

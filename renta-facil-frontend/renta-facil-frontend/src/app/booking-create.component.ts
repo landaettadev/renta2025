@@ -7,6 +7,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { VehicleService, Vehicle } from './core/services/vehicle.service';
 import { BookingService } from './core/services/booking.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -15,7 +17,7 @@ import { AuthService } from './core/services/auth.service';
 @Component({
   selector: 'app-booking-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatOptionModule],
+  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatOptionModule, MatDatepickerModule, MatNativeDateModule],
   template: `
     <mat-card class="booking-create-card">
       <mat-card-title>Reservar Vehículo</mat-card-title>
@@ -37,11 +39,18 @@ import { AuthService } from './core/services/auth.service';
         <div class="form-row">
           <mat-form-field appearance="outline">
             <mat-label>Fecha de inicio</mat-label>
-            <input matInput type="date" name="startDate" [(ngModel)]="booking.startDate" required [min]="today" />
+            <input matInput [matDatepicker]="pickerInicio" name="startDate" [(ngModel)]="booking.startDate" required [min]="today" (dateChange)="onInicioChange()" autocomplete="off" />
+            <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+            <mat-datepicker #pickerInicio></mat-datepicker>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Fecha de fin</mat-label>
-            <input matInput type="date" name="endDate" [(ngModel)]="booking.endDate" required [min]="booking.startDate || today" />
+            <input matInput [matDatepicker]="pickerFin" name="endDate" [(ngModel)]="booking.endDate" required [min]="minDevolucion" autocomplete="off" />
+            <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+            <mat-datepicker #pickerFin></mat-datepicker>
+            <mat-error *ngIf="booking.endDate && booking.startDate && booking.endDate < booking.startDate">
+              La fecha de devolución debe ser posterior a la fecha de inicio.
+            </mat-error>
           </mat-form-field>
         </div>
         <button mat-raised-button class="reservar-btn" type="submit" [disabled]="loading || !form.valid">Reservar</button>
@@ -117,6 +126,16 @@ export class BookingCreateComponent implements OnInit {
   success = false;
   selectedVehicle: Vehicle | null = null;
   today = new Date().toISOString().slice(0, 10);
+
+  get minDevolucion() {
+    return this.booking.startDate ? this.booking.startDate : this.today;
+  }
+
+  onInicioChange() {
+    if (this.booking.endDate && this.booking.startDate && this.booking.endDate < this.booking.startDate) {
+      this.booking.endDate = '';
+    }
+  }
 
   constructor(
     private vehicleService: VehicleService,

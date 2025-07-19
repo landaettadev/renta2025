@@ -37,22 +37,42 @@ namespace VehicleService.API.Application
             return vehicle.Id;
         }
 
-        public async Task<List<VehicleDto>> GetAvailableVehiclesAsync(string type, DateTime startDate, DateTime endDate)
+        public async Task<List<VehicleDto>> GetAvailableVehiclesAsync(string type, DateTime? startDate, DateTime? endDate)
         {
-            var query = _context.Vehicles.Where(v => v.IsAvailable);
+            var vehiclesQuery = _context.Vehicles.AsQueryable();
             if (!string.IsNullOrEmpty(type) && type != "Todos")
             {
-                query = query.Where(v => v.Type == type);
+                vehiclesQuery = vehiclesQuery.Where(v => v.Type == type);
             }
-            // Solo filtrar por reservas si se envían fechas válidas
-            bool filtrarPorFechas = startDate != default && endDate != default && startDate < endDate;
-            var vehicles = await query.ToListAsync();
-            if (filtrarPorFechas)
+            vehiclesQuery = vehiclesQuery.Where(v => v.IsAvailable);
+
+            bool fechasValidas = startDate.HasValue && endDate.HasValue && startDate.Value < endDate.Value;
+            if (!fechasValidas)
             {
-                // Si tuvieras reservas aquí, filtrarías los ocupados
-                // Pero si no, simplemente no filtrar más
+                var vehicles = await vehiclesQuery.ToListAsync();
+                return vehicles.Select(v => new VehicleDto
+                {
+                    Id = v.Id,
+                    LicensePlate = v.LicensePlate,
+                    Brand = v.Brand,
+                    Model = v.Model,
+                    Type = v.Type,
+                    IsAvailable = v.IsAvailable,
+                    Image = v.Image
+                }).ToList();
             }
-            return vehicles.Select(v => new VehicleDto
+
+            // Si hay fechas válidas, excluir vehículos con reservas activas que se crucen
+            var reservasActivas = _context.Bookings.Where(b => b.Estado == RentaFacil.Shared.EstadoReserva.Pendiente || b.Estado == RentaFacil.Shared.EstadoReserva.Confirmada);
+            var vehiculosOcupados = reservasActivas
+                .Where(b => (startDate.Value < b.EndDate && endDate.Value > b.StartDate))
+                .Select(b => b.VehicleId);
+
+            var disponibles = await vehiclesQuery
+                .Where(v => !vehiculosOcupados.Contains(v.Id))
+                .ToListAsync();
+
+            return disponibles.Select(v => new VehicleDto
             {
                 Id = v.Id,
                 LicensePlate = v.LicensePlate,
