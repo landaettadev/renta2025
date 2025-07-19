@@ -14,11 +14,14 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
+import { VehicleFormComponent } from './vehicle-form.component';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ConfirmDialogComponent } from './confirm-dialog.component';
 
 @Component({
   selector: 'app-admin-vehicles',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatIconModule, MatSnackBarModule, MatTableModule, MatPaginatorModule, MatSortModule, MatDialogModule],
+  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatIconModule, MatSnackBarModule, MatTableModule, MatPaginatorModule, MatSortModule, MatDialogModule, MatProgressSpinnerModule],
   template: `
     <mat-card class="admin-vehicle-card">
       <mat-card-title>Gestión de Vehículos</mat-card-title>
@@ -69,7 +72,8 @@ import { MatTableDataSource } from '@angular/material/table';
               <button mat-icon-button color="primary" (click)="openDialog(v)"><mat-icon>edit</mat-icon></button>
               <button mat-icon-button color="warn" (click)="deleteVehicle(v)"><mat-icon>delete_forever</mat-icon></button>
               <button mat-icon-button [color]="v.isAvailable ? 'primary' : 'warn'" (click)="toggleDisponibilidad(v)">
-                <mat-icon>{{ v.isAvailable ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+                <mat-spinner *ngIf="loadingToggleId === v.id" diameter="22"></mat-spinner>
+                <mat-icon *ngIf="loadingToggleId !== v.id">{{ v.isAvailable ? 'toggle_on' : 'toggle_off' }}</mat-icon>
               </button>
             </td>
           </ng-container>
@@ -79,48 +83,6 @@ import { MatTableDataSource } from '@angular/material/table';
         <mat-paginator [pageSize]="8" [pageSizeOptions]="[8, 16, 32]"></mat-paginator>
       </div>
     </mat-card>
-    <ng-template #dialogTemplate let-data>
-      <form (ngSubmit)="saveVehicle()" #form="ngForm" class="vehicle-form-modal">
-        <mat-form-field appearance="outline">
-          <mat-label>Marca</mat-label>
-          <input matInput name="brand" [(ngModel)]="editVehicle.brand" required />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Modelo</mat-label>
-          <input matInput name="model" [(ngModel)]="editVehicle.model" required />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo</mat-label>
-          <mat-select name="type" [(ngModel)]="editVehicle.type" required>
-            <mat-option value="Sedan">Sedan</mat-option>
-            <mat-option value="SUV">SUV</mat-option>
-            <mat-option value="Hatchback">Hatchback</mat-option>
-            <mat-option value="Pickup">Pickup</mat-option>
-            <mat-option value="Otro">Otro</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Placa</mat-label>
-          <input matInput name="licensePlate" [(ngModel)]="editVehicle.licensePlate" required />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Disponibilidad</mat-label>
-          <mat-select name="isAvailable" [(ngModel)]="editVehicle.isAvailable" required>
-            <mat-option [value]="true">Disponible</mat-option>
-            <mat-option [value]="false">No disponible</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <div class="image-upload">
-          <label>Imagen:</label>
-          <input type="file" (change)="onFileChange($event, true)" accept="image/*" />
-          <img *ngIf="editVehicle.image" [src]="editVehicle.image" alt="Preview" class="preview-img" />
-        </div>
-        <button mat-raised-button color="primary" type="submit" [disabled]="loading || !form.valid">
-          <mat-icon>save</mat-icon> Guardar
-        </button>
-        <button mat-button type="button" (click)="closeDialog()">Cancelar</button>
-      </form>
-    </ng-template>
   `,
   styles: [`
     .admin-vehicle-card {
@@ -315,6 +277,7 @@ export class AdminVehiclesComponent implements OnInit {
   imageFile: File | null = null;
   editVehicle: Partial<Vehicle> = { isAvailable: true };
   dialogRef: any;
+  loadingToggleId: number | null = null;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -346,21 +309,24 @@ export class AdminVehiclesComponent implements OnInit {
     this.dataSource.filter = filterValue.trim().toLowerCase();
   }
   openDialog(vehicle?: Vehicle) {
-    this.editVehicle = vehicle ? { ...vehicle } : { isAvailable: true };
-    this.dialogRef = this.dialog.open(this.dialogTemplate, { width: '420px' });
+    const dialogRef = this.dialog.open(VehicleFormComponent, {
+      width: '420px',
+      data: vehicle ? { ...vehicle } : { isAvailable: true, loading: this.loading }
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.saveVehicleDialog(result);
+      }
+    });
   }
-  closeDialog() {
-    if (this.dialogRef) this.dialogRef.close();
-  }
-  saveVehicle() {
+  saveVehicleDialog(data: any) {
     this.loading = true;
-    if (this.editVehicle.id) {
-      this.vehicleService.update(this.editVehicle as Vehicle).subscribe({
+    if (data.id) {
+      this.vehicleService.update(data as Vehicle).subscribe({
         next: () => {
           this.loading = false;
           this.success = true;
           this.snackBar.open('Vehículo actualizado', 'Cerrar', { duration: 2000 });
-          this.closeDialog();
           this.loadVehicles();
         },
         error: () => {
@@ -369,12 +335,11 @@ export class AdminVehiclesComponent implements OnInit {
         }
       });
     } else {
-      this.vehicleService.register(this.editVehicle, this.imageFile || undefined).subscribe({
+      this.vehicleService.register(data, data.imageFile || undefined).subscribe({
         next: () => {
           this.loading = false;
           this.success = true;
           this.snackBar.open('Vehículo agregado', 'Cerrar', { duration: 2000 });
-          this.closeDialog();
           this.loadVehicles();
         },
         error: () => {
@@ -384,40 +349,36 @@ export class AdminVehiclesComponent implements OnInit {
       });
     }
   }
-  onFileChange(event: any, isEdit = false) {
-    const file = event.target.files[0];
-    if (file) {
-      this.imageFile = file;
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        if (isEdit) {
-          this.editVehicle.image = e.target.result;
-        } else {
-          // deprecated, solo para compatibilidad
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  }
   toggleDisponibilidad(v: Vehicle) {
+    this.loadingToggleId = v.id;
     const updated = { ...v, isAvailable: !v.isAvailable };
     this.vehicleService.update(updated).subscribe({
       next: () => {
         this.snackBar.open('Disponibilidad actualizada', 'Cerrar', { duration: 2000 });
         this.loadVehicles();
+        this.loadingToggleId = null;
       },
-      error: () => this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 2000 })
+      error: () => {
+        this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 2000 });
+        this.loadingToggleId = null;
+      }
     });
   }
   deleteVehicle(v: Vehicle) {
-    if (confirm('¿Seguro que deseas eliminar este vehículo?')) {
-      this.vehicleService.delete(v.id).subscribe({
-        next: () => {
-          this.snackBar.open('Vehículo eliminado', 'Cerrar', { duration: 2000 });
-          this.loadVehicles();
-        },
-        error: () => this.snackBar.open('Error al eliminar', 'Cerrar', { duration: 2000 })
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '340px',
+      data: { message: '¿Seguro que deseas eliminar este vehículo?' }
+    });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === true) {
+        this.vehicleService.delete(v.id).subscribe({
+          next: () => {
+            this.snackBar.open('Vehículo eliminado', 'Cerrar', { duration: 2000 });
+            this.loadVehicles();
+          },
+          error: () => this.snackBar.open('Error al eliminar', 'Cerrar', { duration: 2000 })
+        });
+      }
+    });
   }
 } 
