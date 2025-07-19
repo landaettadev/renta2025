@@ -28,8 +28,8 @@ namespace VehicleService.API.Application
                 Brand = vehicleDto.Brand,
                 Model = vehicleDto.Model,
                 Type = vehicleDto.Type,
-                IsAvailable = true,
-                Image = vehicleDto.Image // <--- Asignar imagen
+                IsAvailable = vehicleDto.IsAvailable, // Respetar valor enviado
+                Image = vehicleDto.Image
             };
             _context.Vehicles.Add(vehicle);
             await _context.SaveChangesAsync();
@@ -39,10 +39,19 @@ namespace VehicleService.API.Application
 
         public async Task<List<VehicleDto>> GetAvailableVehiclesAsync(string type, DateTime startDate, DateTime endDate)
         {
-            // Consulta básica de disponibilidad (puede mejorarse con lógica de reservas)
-            var vehicles = await _context.Vehicles
-                .Where(v => v.Type == type && v.IsAvailable)
-                .ToListAsync();
+            var query = _context.Vehicles.Where(v => v.IsAvailable);
+            if (!string.IsNullOrEmpty(type) && type != "Todos")
+            {
+                query = query.Where(v => v.Type == type);
+            }
+            // Solo filtrar por reservas si se envían fechas válidas
+            bool filtrarPorFechas = startDate != default && endDate != default && startDate < endDate;
+            var vehicles = await query.ToListAsync();
+            if (filtrarPorFechas)
+            {
+                // Si tuvieras reservas aquí, filtrarías los ocupados
+                // Pero si no, simplemente no filtrar más
+            }
             return vehicles.Select(v => new VehicleDto
             {
                 Id = v.Id,
@@ -50,7 +59,8 @@ namespace VehicleService.API.Application
                 Brand = v.Brand,
                 Model = v.Model,
                 Type = v.Type,
-                IsAvailable = v.IsAvailable
+                IsAvailable = v.IsAvailable,
+                Image = v.Image
             }).ToList();
         }
 
@@ -75,6 +85,21 @@ namespace VehicleService.API.Application
             if (vehicle == null)
                 return false;
             _context.Vehicles.Remove(vehicle);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateVehicleAsync(int id, VehicleDto vehicleDto)
+        {
+            var vehicle = await _context.Vehicles.FindAsync(id);
+            if (vehicle == null)
+                return false;
+            vehicle.LicensePlate = vehicleDto.LicensePlate;
+            vehicle.Brand = vehicleDto.Brand;
+            vehicle.Model = vehicleDto.Model;
+            vehicle.Type = vehicleDto.Type;
+            vehicle.IsAvailable = vehicleDto.IsAvailable;
+            vehicle.Image = vehicleDto.Image;
             await _context.SaveChangesAsync();
             return true;
         }

@@ -9,5 +9,6 @@ namespace VehicleService.API
 
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<RentaFacil.Shared.Entities.Booking> Bookings { get; set; }
     }
 } 

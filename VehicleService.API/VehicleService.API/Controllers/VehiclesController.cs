@@ -59,6 +59,24 @@ namespace VehicleService.API.Controllers
             return Ok(vehicles);
         }
 
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateVehicle(int id, [FromBody] VehicleDto vehicleDto)
+        {
+            try
+            {
+                var updated = await _vehicleService.UpdateVehicleAsync(id, vehicleDto);
+                if (!updated)
+                    return NotFound();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar vehículo");
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteVehicle(int id)

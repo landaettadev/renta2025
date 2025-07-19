@@ -37,4 +37,13 @@ export class VehicleService {
   delete(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
+
+  update(vehicle: Vehicle): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${vehicle.id}`, vehicle);
+  }
+
+  getFiltered(type: string = '', startDate: string = '', endDate: string = ''): Observable<Vehicle[]> {
+    const tipo = (!type || type === 'Todos') ? '' : type;
+    return this.http.get<Vehicle[]>(`${this.apiUrl}/available?type=${tipo}&startDate=${startDate}&endDate=${endDate}`);
+  }
 } 

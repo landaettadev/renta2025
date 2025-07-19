@@ -27,7 +27,7 @@ export class AuthService {
   }
 
   register(nombre: string, email: string, password: string): Observable<any> {
-    return this.http.post(`${environment.apiVehicle.replace('/api/vehicles','')}/api/auth/register`, { nombre, email, password });
+    return this.http.post(`${environment.apiVehicle.replace('/api/vehicles','')}/api/auth/register`, { nombre, email, password, rol: 'Usuario' });
   }
 
   logout() {

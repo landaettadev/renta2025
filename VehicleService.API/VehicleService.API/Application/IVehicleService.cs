@@ -11,5 +11,6 @@ namespace VehicleService.API.Application
         Task<List<VehicleDto>> GetAvailableVehiclesAsync(string type, DateTime startDate, DateTime endDate);
         Task<List<VehicleDto>> GetAllVehiclesAsync();
         Task<bool> DeleteVehicleAsync(int id);
+        Task<bool> UpdateVehicleAsync(int id, VehicleDto vehicleDto);
     }
 } 
