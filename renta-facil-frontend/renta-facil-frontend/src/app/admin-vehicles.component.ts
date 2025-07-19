@@ -1,100 +1,126 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { MatListModule } from '@angular/material/list';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { VehicleService, Vehicle } from './core/services/vehicle.service';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSort, MatSortModule } from '@angular/material/sort';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
   selector: 'app-admin-vehicles',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatListModule, MatSelectModule, MatIconModule, MatSnackBarModule],
+  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatIconModule, MatSnackBarModule, MatTableModule, MatPaginatorModule, MatSortModule, MatDialogModule],
   template: `
     <mat-card class="admin-vehicle-card">
-      <mat-card-title>Agregar Vehículo</mat-card-title>
-      <form (ngSubmit)="addVehicle()" #form="ngForm" class="vehicle-form">
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Marca</mat-label>
-            <input matInput name="brand" [(ngModel)]="vehicle.brand" required />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Modelo</mat-label>
-            <input matInput name="model" [(ngModel)]="vehicle.model" required />
-          </mat-form-field>
-        </div>
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Tipo</mat-label>
-            <mat-select name="type" [(ngModel)]="vehicle.type" required>
-              <mat-option value="Sedan">Sedan</mat-option>
-              <mat-option value="SUV">SUV</mat-option>
-              <mat-option value="Hatchback">Hatchback</mat-option>
-              <mat-option value="Pickup">Pickup</mat-option>
-              <mat-option value="Otro">Otro</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Placa</mat-label>
-            <input matInput name="licensePlate" [(ngModel)]="vehicle.licensePlate" required />
-          </mat-form-field>
-        </div>
-        <div class="form-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Disponibilidad</mat-label>
-            <mat-select name="isAvailable" [(ngModel)]="vehicle.isAvailable" required>
-              <mat-option [value]="true">Disponible</mat-option>
-              <mat-option [value]="false">No disponible</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <div class="image-upload">
-            <label>Imagen:</label>
-            <input type="file" (change)="onFileChange($event)" accept="image/*" />
-            <img *ngIf="vehicle.image" [src]="vehicle.image" alt="Preview" class="preview-img" />
-          </div>
-        </div>
-        <button mat-raised-button class="agregar-btn" type="submit" [disabled]="loading || !form.valid">
-          <span>Agregar</span>
+      <mat-card-title>Gestión de Vehículos</mat-card-title>
+      <div class="actions-row">
+        <button mat-raised-button color="primary" (click)="openDialog()">
+          <mat-icon>add</mat-icon> Agregar Vehículo
         </button>
-        <div *ngIf="success" class="success">Vehículo agregado exitosamente.</div>
-        <div *ngIf="error" class="error">{{ error }}</div>
-      </form>
-    </mat-card>
-
-    <mat-card class="admin-vehicle-list">
-      <mat-card-title>Vehículos Registrados</mat-card-title>
-      <div class="vehicle-list">
-        <div class="vehicle-list-card" *ngFor="let v of vehicles">
-          <img [src]="v.image || 'https://cdn.pixabay.com/photo/2012/05/29/00/43/car-49278_1280.jpg'" class="list-img" />
-          <div class="vehicle-info">
-            <div class="vehicle-title">{{ v.brand }} {{ v.model }} <span class="vehicle-type">({{ v.type }})</span></div>
-            <div class="vehicle-plate">Placa: {{ v.licensePlate }}</div>
-            <span class="badge" [ngClass]="{'disponible': v.isAvailable, 'nodisponible': !v.isAvailable}">
-              {{ v.isAvailable ? 'Disponible' : 'No disponible' }}
-            </span>
-          </div>
-          <div class="vehicle-actions">
-            <button mat-icon-button
-                    [color]="v.isAvailable ? 'primary' : 'warn'"
-                    (click)="toggleDisponibilidad(v)"
-                    class="switch-btn">
-              <mat-icon>
-                {{ v.isAvailable ? 'toggle_on' : 'toggle_off' }}
-              </mat-icon>
-            </button>
-            <button mat-icon-button color="warn" (click)="deleteVehicle(v)">
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-        </div>
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Filtrar</mat-label>
+          <input matInput (keyup)="applyFilter($event)" placeholder="Buscar..." />
+        </mat-form-field>
+      </div>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z2">
+          <ng-container matColumnDef="image">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let v">
+              <img [src]="v.image || 'https://cdn.pixabay.com/photo/2012/05/29/00/43/car-49278_1280.jpg'" class="list-img" />
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="brand">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Marca</th>
+            <td mat-cell *matCellDef="let v">{{ v.brand }}</td>
+          </ng-container>
+          <ng-container matColumnDef="model">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Modelo</th>
+            <td mat-cell *matCellDef="let v">{{ v.model }}</td>
+          </ng-container>
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+            <td mat-cell *matCellDef="let v">{{ v.type }}</td>
+          </ng-container>
+          <ng-container matColumnDef="licensePlate">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Placa</th>
+            <td mat-cell *matCellDef="let v">{{ v.licensePlate }}</td>
+          </ng-container>
+          <ng-container matColumnDef="isAvailable">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Disponibilidad</th>
+            <td mat-cell *matCellDef="let v">
+              <span class="badge" [ngClass]="{'disponible': v.isAvailable, 'nodisponible': !v.isAvailable}">
+                {{ v.isAvailable ? 'Disponible' : 'No disponible' }}
+              </span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let v">
+              <button mat-icon-button color="primary" (click)="openDialog(v)"><mat-icon>edit</mat-icon></button>
+              <button mat-icon-button color="warn" (click)="deleteVehicle(v)"><mat-icon>delete_forever</mat-icon></button>
+              <button mat-icon-button [color]="v.isAvailable ? 'primary' : 'warn'" (click)="toggleDisponibilidad(v)">
+                <mat-icon>{{ v.isAvailable ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        <mat-paginator [pageSize]="8" [pageSizeOptions]="[8, 16, 32]"></mat-paginator>
       </div>
     </mat-card>
+    <ng-template #dialogTemplate let-data>
+      <form (ngSubmit)="saveVehicle()" #form="ngForm" class="vehicle-form-modal">
+        <mat-form-field appearance="outline">
+          <mat-label>Marca</mat-label>
+          <input matInput name="brand" [(ngModel)]="editVehicle.brand" required />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Modelo</mat-label>
+          <input matInput name="model" [(ngModel)]="editVehicle.model" required />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select name="type" [(ngModel)]="editVehicle.type" required>
+            <mat-option value="Sedan">Sedan</mat-option>
+            <mat-option value="SUV">SUV</mat-option>
+            <mat-option value="Hatchback">Hatchback</mat-option>
+            <mat-option value="Pickup">Pickup</mat-option>
+            <mat-option value="Otro">Otro</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Placa</mat-label>
+          <input matInput name="licensePlate" [(ngModel)]="editVehicle.licensePlate" required />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Disponibilidad</mat-label>
+          <mat-select name="isAvailable" [(ngModel)]="editVehicle.isAvailable" required>
+            <mat-option [value]="true">Disponible</mat-option>
+            <mat-option [value]="false">No disponible</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <div class="image-upload">
+          <label>Imagen:</label>
+          <input type="file" (change)="onFileChange($event, true)" accept="image/*" />
+          <img *ngIf="editVehicle.image" [src]="editVehicle.image" alt="Preview" class="preview-img" />
+        </div>
+        <button mat-raised-button color="primary" type="submit" [disabled]="loading || !form.valid">
+          <mat-icon>save</mat-icon> Guardar
+        </button>
+        <button mat-button type="button" (click)="closeDialog()">Cancelar</button>
+      </form>
+    </ng-template>
   `,
   styles: [`
     .admin-vehicle-card {
@@ -105,12 +131,57 @@ import { VehicleService, Vehicle } from './core/services/vehicle.service';
       padding: 32px 24px 24px 24px;
       background: #fff;
     }
-    .vehicle-form .form-row {
+    .actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .filter-field {
+      flex: 1;
+      margin-left: 24px;
+    }
+    .table-container {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    th, td {
+      padding: 12px 18px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background-color: #fafbfc;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+    }
+    td {
+      color: #555;
+      font-size: 0.9rem;
+    }
+    .list-img {
+      width: 80px;
+      height: 54px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-right: 18px;
+      border: 1.5px solid #eee;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .vehicle-form-modal .form-row {
       display: flex;
       gap: 24px;
       margin-bottom: 12px;
     }
-    .vehicle-form mat-form-field {
+    .vehicle-form-modal mat-form-field {
       flex: 1;
     }
     .image-upload {
@@ -235,47 +306,95 @@ import { VehicleService, Vehicle } from './core/services/vehicle.service';
   `]
 })
 export class AdminVehiclesComponent implements OnInit {
-  vehicle: Partial<Vehicle> = { isAvailable: true };
   vehicles: Vehicle[] = [];
+  dataSource = new MatTableDataSource<Vehicle>([]);
+  displayedColumns: string[] = ['image', 'brand', 'model', 'type', 'licensePlate', 'isAvailable', 'actions'];
   loading = false;
   error = '';
   success = false;
   imageFile: File | null = null;
-  constructor(private vehicleService: VehicleService, private snackBar: MatSnackBar) {}
+  editVehicle: Partial<Vehicle> = { isAvailable: true };
+  dialogRef: any;
+
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild('dialogTemplate') dialogTemplate: any;
+
+  constructor(private vehicleService: VehicleService, private snackBar: MatSnackBar, private dialog: MatDialog) {}
+
   ngOnInit() {
     this.loadVehicles();
   }
+  ngAfterViewInit() {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+  }
   loadVehicles() {
     this.vehicleService.getAll().subscribe({
-      next: (vehicles) => this.vehicles = vehicles,
-      error: () => this.vehicles = []
-    });
-  }
-  addVehicle() {
-    this.loading = true;
-    this.error = '';
-    this.success = false;
-    this.vehicleService.register(this.vehicle, this.imageFile || undefined).subscribe({
-      next: () => {
-        this.loading = false;
-        this.success = true;
-        this.vehicle = { isAvailable: true };
-        this.imageFile = null;
-        this.loadVehicles();
+      next: (vehicles) => {
+        this.vehicles = vehicles;
+        this.dataSource.data = vehicles;
       },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error || 'Error al registrar vehículo.';
+      error: () => {
+        this.vehicles = [];
+        this.dataSource.data = [];
       }
     });
   }
-  onFileChange(event: any) {
+  applyFilter(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.dataSource.filter = filterValue.trim().toLowerCase();
+  }
+  openDialog(vehicle?: Vehicle) {
+    this.editVehicle = vehicle ? { ...vehicle } : { isAvailable: true };
+    this.dialogRef = this.dialog.open(this.dialogTemplate, { width: '420px' });
+  }
+  closeDialog() {
+    if (this.dialogRef) this.dialogRef.close();
+  }
+  saveVehicle() {
+    this.loading = true;
+    if (this.editVehicle.id) {
+      this.vehicleService.update(this.editVehicle as Vehicle).subscribe({
+        next: () => {
+          this.loading = false;
+          this.success = true;
+          this.snackBar.open('Vehículo actualizado', 'Cerrar', { duration: 2000 });
+          this.closeDialog();
+          this.loadVehicles();
+        },
+        error: () => {
+          this.loading = false;
+          this.error = 'Error al actualizar vehículo.';
+        }
+      });
+    } else {
+      this.vehicleService.register(this.editVehicle, this.imageFile || undefined).subscribe({
+        next: () => {
+          this.loading = false;
+          this.success = true;
+          this.snackBar.open('Vehículo agregado', 'Cerrar', { duration: 2000 });
+          this.closeDialog();
+          this.loadVehicles();
+        },
+        error: () => {
+          this.loading = false;
+          this.error = 'Error al registrar vehículo.';
+        }
+      });
+    }
+  }
+  onFileChange(event: any, isEdit = false) {
     const file = event.target.files[0];
     if (file) {
       this.imageFile = file;
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.vehicle.image = e.target.result;
+        if (isEdit) {
+          this.editVehicle.image = e.target.result;
+        } else {
+          // deprecated, solo para compatibilidad
+        }
       };
       reader.readAsDataURL(file);
     }

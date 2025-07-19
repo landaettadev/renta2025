@@ -13,5 +13,6 @@ export const routes: Routes = [
   { path: 'admin/vehiculos', loadComponent: () => import('./admin-vehicles.component').then(m => m.AdminVehiclesComponent), canActivate: [adminGuard] },
   { path: 'admin/reservas', loadComponent: () => import('./admin-bookings.component').then(m => m.AdminBookingsComponent), canActivate: [adminGuard] },
   { path: 'admin/usuarios', loadComponent: () => import('./admin-users.component').then(m => m.AdminUsersComponent), canActivate: [adminGuard] },
+  { path: 'chip-test', loadComponent: () => import('./chip-test.component').then(m => m.ChipTestComponent) },
   { path: '**', redirectTo: '' }
 ];

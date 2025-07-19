@@ -1,15 +1,23 @@
-<app-navbar></app-navbar>
-
-<div class="main-content">
-  <router-outlet></router-outlet>
+<div class="app-root-flex">
+  <app-navbar></app-navbar>
+  <div class="main-content">
+    <router-outlet></router-outlet>
+  </div>
+  <app-footer></app-footer>
 </div>
 
-<app-footer></app-footer>
-
 <style>
+.app-root-flex {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
 .main-content {
+  flex: 1 0 auto;
   padding: 24px;
-  min-height: calc(100vh - 120px);
   box-sizing: border-box;
+}
+app-footer {
+  flex-shrink: 0;
 }
 </style>

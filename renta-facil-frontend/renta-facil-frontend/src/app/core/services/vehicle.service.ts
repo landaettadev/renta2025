@@ -11,6 +11,7 @@ export interface Vehicle {
   type: string;
   isAvailable: boolean;
   image?: string; // base64 o url
+  pricePerDay?: number;
 }
 
 @Injectable({ providedIn: 'root' })
