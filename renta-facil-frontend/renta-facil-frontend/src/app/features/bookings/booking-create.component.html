@@ -1,0 +1,61 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Crear Nueva Reserva</mat-card-title>
+  </mat-card-header>
+  
+  <mat-card-content>
+    <form (ngSubmit)="create()" class="booking-create-form" #form="ngForm">
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>ID del Vehículo</mat-label>
+          <input matInput [(ngModel)]="booking.vehicleId" name="vehicleId" type="number" required>
+          <mat-hint>Ingresa el ID del vehículo a reservar</mat-hint>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>ID del Cliente</mat-label>
+          <input matInput [(ngModel)]="booking.clientId" name="clientId" type="number" required>
+          <mat-hint>Ingresa el ID del cliente</mat-hint>
+        </mat-form-field>
+      </div>
+      
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de Inicio</mat-label>
+          <input matInput [(ngModel)]="booking.startDate" name="startDate" type="date" required>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de Fin</mat-label>
+          <input matInput [(ngModel)]="booking.endDate" name="endDate" type="date" required>
+        </mat-form-field>
+      </div>
+      
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select [(ngModel)]="booking.status" name="status" required>
+          <mat-option value="Pending">Pendiente</mat-option>
+          <mat-option value="Confirmed">Confirmada</mat-option>
+          <mat-option value="Cancelled">Cancelada</mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+        <mat-icon>add</mat-icon>
+        Crear Reserva
+      </button>
+    </form>
+    
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+    
+    <div *ngIf="success" class="success">
+      <mat-icon>check_circle</mat-icon>
+      Reserva creada exitosamente con ID: {{ success }}
+    </div>
+    
+    <div *ngIf="error" class="error">
+      <mat-icon>error</mat-icon>
+      {{ error }}
+    </div>
+  </mat-card-content>
+</mat-card> 

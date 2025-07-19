@@ -1,0 +1,35 @@
+.booking-history-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.error {
+  color: #f44336;
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+mat-card {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+mat-card-header {
+  margin-bottom: 16px;
+}
+
+mat-list-item {
+  margin-bottom: 8px;
+}
+
+button[mat-raised-button] {
+  align-self: flex-start;
+  margin-top: 8px;
+} 

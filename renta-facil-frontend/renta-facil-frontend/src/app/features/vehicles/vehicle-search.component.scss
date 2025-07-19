@@ -1,0 +1,43 @@
+.vehicle-search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.form-row mat-form-field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.error {
+  color: #f44336;
+  margin-top: 16px;
+  padding: 8px;
+  background-color: #ffebee;
+  border-radius: 4px;
+}
+
+mat-card {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+mat-card-header {
+  margin-bottom: 16px;
+}
+
+mat-list-item {
+  margin-bottom: 8px;
+}
+
+button[mat-raised-button] {
+  align-self: flex-start;
+  margin-top: 8px;
+} 

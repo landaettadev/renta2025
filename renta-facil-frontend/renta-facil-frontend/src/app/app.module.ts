@@ -1,0 +1,1 @@
+// Este proyecto usa standalone components. No se requiere AppModule. 

@@ -1,0 +1,53 @@
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Buscar Vehículos Disponibles</mat-card-title>
+  </mat-card-header>
+  
+  <mat-card-content>
+    <form (ngSubmit)="search()" class="vehicle-search-form" #form="ngForm">
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de Vehículo</mat-label>
+          <input matInput [(ngModel)]="type" name="type" placeholder="Ej: Sedan, SUV, etc.">
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de Inicio</mat-label>
+          <input matInput type="date" [(ngModel)]="startDate" name="startDate" required>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de Fin</mat-label>
+          <input matInput type="date" [(ngModel)]="endDate" name="endDate" required>
+        </mat-form-field>
+      </div>
+      
+      <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+        <mat-icon>search</mat-icon>
+        Buscar Vehículos
+      </button>
+    </form>
+    
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+    
+    <div *ngIf="vehicles.length > 0 && !loading">
+      <h3>Vehículos disponibles</h3>
+      <mat-list>
+        <mat-list-item *ngFor="let vehicle of vehicles">
+          <mat-icon matListItemIcon>directions_car</mat-icon>
+          <div matListItemTitle>{{ vehicle.brand }} {{ vehicle.model }}</div>
+          <div matListItemLine>Placa: {{ vehicle.licensePlate }}</div>
+          <div matListItemLine>Tipo: {{ vehicle.type }}</div>
+        </mat-list-item>
+      </mat-list>
+    </div>
+    
+    <div *ngIf="vehicles.length === 0 && searched && !loading && !error">
+      <p>No hay vehículos disponibles para los criterios especificados.</p>
+    </div>
+    
+    <div *ngIf="error" class="error">
+      {{ error }}
+    </div>
+  </mat-card-content>
+</mat-card> 
