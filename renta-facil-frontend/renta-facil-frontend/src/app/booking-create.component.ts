@@ -32,7 +32,7 @@ import { AuthService } from './core/services/auth.service';
       <form (ngSubmit)="create()" #form="ngForm" class="booking-form">
         <mat-form-field appearance="outline" *ngIf="!selectedVehicle">
           <mat-label>Vehículo</mat-label>
-          <mat-select name="vehicleId" [(ngModel)]="booking.vehicleId" required>
+          <mat-select name="vehicleId" [(ngModel)]="booking.vehicleId" required (selectionChange)="setVehicle(booking.vehicleId)">
             <mat-option *ngFor="let v of vehicles" [value]="v.id">{{ v.brand }} {{ v.model }} ({{ v.licensePlate }})</mat-option>
           </mat-select>
         </mat-form-field>
@@ -54,6 +54,7 @@ import { AuthService } from './core/services/auth.service';
           </mat-form-field>
         </div>
         <button mat-raised-button class="reservar-btn" type="submit" [disabled]="loading || !form.valid">Reservar</button>
+        <div *ngIf="overlapWarning" class="error">{{ overlapWarning }}</div>
         <div *ngIf="success" class="success">Reserva creada exitosamente.</div>
         <div *ngIf="error" class="error">{{ error }}</div>
       </form>
@@ -126,6 +127,8 @@ export class BookingCreateComponent implements OnInit {
   success = false;
   selectedVehicle: Vehicle | null = null;
   today = new Date().toISOString().slice(0, 10);
+  existingBookings: any[] = [];
+  overlapWarning: string = '';
 
   get minDevolucion() {
     return this.booking.startDate ? this.booking.startDate : this.today;
@@ -135,6 +138,18 @@ export class BookingCreateComponent implements OnInit {
     if (this.booking.endDate && this.booking.startDate && this.booking.endDate < this.booking.startDate) {
       this.booking.endDate = '';
     }
+    this.checkOverlap();
+  }
+
+  setVehicle(vehicleId: number) {
+    this.booking.vehicleId = vehicleId;
+    this.selectedVehicle = this.vehicles.find(v => v.id === vehicleId) || null;
+    if (vehicleId) {
+      this.loadExistingBookings(vehicleId);
+    } else {
+      this.existingBookings = [];
+    }
+    this.checkOverlap();
   }
 
   constructor(
@@ -155,15 +170,55 @@ export class BookingCreateComponent implements OnInit {
           if (vehicle) {
             this.selectedVehicle = vehicle;
             this.booking.vehicleId = vehicle.id;
+            this.loadExistingBookings(vehicle.id);
           }
         }
+        // Leer fechas de query params
+        this.route.queryParams.subscribe(params => {
+          if (params['startDate']) this.booking.startDate = params['startDate'];
+          if (params['endDate']) this.booking.endDate = params['endDate'];
+          this.checkOverlap();
+        });
       },
       error: () => this.vehicles = []
     });
   }
+
+  loadExistingBookings(vehicleId: number) {
+    this.bookingService.getByVehicle(vehicleId).subscribe({
+      next: (bookings) => {
+        this.existingBookings = bookings;
+        this.checkOverlap();
+      },
+      error: () => {
+        this.existingBookings = [];
+      }
+    });
+  }
+
+  checkOverlap() {
+    this.overlapWarning = '';
+    if (!this.booking.startDate || !this.booking.endDate || !this.existingBookings.length) return;
+    const start = new Date(this.booking.startDate);
+    const end = new Date(this.booking.endDate);
+    for (const b of this.existingBookings) {
+      const bStart = new Date(b.startDate);
+      const bEnd = new Date(b.endDate);
+      if ((start <= bEnd) && (end >= bStart)) {
+        this.overlapWarning = '¡El vehículo ya está reservado en el rango seleccionado!';
+        break;
+      }
+    }
+  }
+
   create() {
     if (!this.auth.isLoggedIn()) {
       this.router.navigate(['/login']);
+      return;
+    }
+    this.checkOverlap();
+    if (this.overlapWarning) {
+      this.error = this.overlapWarning;
       return;
     }
     this.loading = true;

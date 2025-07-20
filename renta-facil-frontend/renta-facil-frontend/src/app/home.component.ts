@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { VehicleService, Vehicle } from './core/services/vehicle.service';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormGroup } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -43,13 +43,13 @@ import { MatInputModule } from '@angular/material/input';
         </mat-form-field>
         <mat-form-field appearance="outline" class="date-field">
           <mat-label>Fecha de recogida</mat-label>
-          <input matInput [matDatepicker]="pickerInicio" name="fechaInicio" [(ngModel)]="filtroInicio" autocomplete="off" />
+          <input matInput [matDatepicker]="pickerInicio" name="fechaInicio" [(ngModel)]="filtroInicio" autocomplete="off" [matDatepickerFilter]="dateFilter" />
           <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
           <mat-datepicker #pickerInicio></mat-datepicker>
         </mat-form-field>
         <mat-form-field appearance="outline" class="date-field">
           <mat-label>Devolución</mat-label>
-          <input matInput [matDatepicker]="pickerFin" name="fechaFin" [(ngModel)]="filtroFin" [min]="filtroInicio" autocomplete="off" />
+          <input matInput [matDatepicker]="pickerFin" name="fechaFin" [(ngModel)]="filtroFin" [min]="filtroInicio" autocomplete="off" [matDatepickerFilter]="dateFilter" [disabled]="!filtroInicio" />
           <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
           <mat-datepicker #pickerFin></mat-datepicker>
         </mat-form-field>
@@ -72,7 +72,7 @@ import { MatInputModule } from '@angular/material/input';
         </mat-card-content>
         <mat-card-actions>
           <div class="reservar-btn-container">
-            <button mat-raised-button class="reservar-btn" [routerLink]="['/reservar', v.id]" [disabled]="!v.isAvailable">
+            <button mat-raised-button class="reservar-btn" [disabled]="!v.isAvailable" (click)="reservar(v.id)">
               <span>Reservar</span>
             </button>
           </div>
@@ -227,8 +227,7 @@ export class HomeComponent implements OnInit {
   filtroTipo: string = '';
   filtroInicio: any = '';
   filtroFin: any = '';
-
-  constructor(private vehicleService: VehicleService) {}
+  constructor(private vehicleService: VehicleService, private router: Router) {}
 
   ngOnInit() {
     this.cargarTodos();
@@ -246,8 +245,26 @@ export class HomeComponent implements OnInit {
     }
     const inicio = this.filtroInicio ? this.formatearFecha(this.filtroInicio) : '';
     const fin = this.filtroFin ? this.formatearFecha(this.filtroFin) : '';
-    this.vehicleService.getFiltered(this.filtroTipo, inicio, fin).subscribe({
-      next: (vehicles) => this.vehicles = vehicles,
+    this.vehicleService.getAll().subscribe({
+      next: (allVehicles) => {
+        // Filtrar por tipo si corresponde
+        let filteredVehicles = allVehicles;
+        if (this.filtroTipo && this.filtroTipo !== 'Todos') {
+          filteredVehicles = allVehicles.filter(v => v.type === this.filtroTipo);
+        }
+        this.vehicleService.getFiltered(this.filtroTipo, inicio, fin).subscribe({
+          next: (availableVehicles) => {
+            const availableIds = new Set(availableVehicles.map(v => v.id));
+            this.vehicles = filteredVehicles.map(v => ({
+              ...v,
+              isAvailable: availableIds.has(v.id)
+            }));
+          },
+          error: () => {
+            this.vehicles = filteredVehicles.map(v => ({ ...v, isAvailable: false }));
+          }
+        });
+      },
       error: () => this.vehicles = []
     });
   }
@@ -261,5 +278,20 @@ export class HomeComponent implements OnInit {
     if (!fecha) return '';
     const d = new Date(fecha);
     return d.toISOString().slice(0, 10);
+  }
+  reservar(vehicleId: number) {
+    this.router.navigate(['/reservar', vehicleId], {
+      queryParams: {
+        startDate: this.filtroInicio ? this.formatearFecha(this.filtroInicio) : '',
+        endDate: this.filtroFin ? this.formatearFecha(this.filtroFin) : ''
+      }
+    });
+  }
+  today = new Date();
+  // Permitir solo fechas desde hoy en adelante
+  dateFilter = (d: Date | null): boolean => {
+    const today = this.today;
+    today.setHours(0,0,0,0);
+    return !d || d >= today;
   }
 } 

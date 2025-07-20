@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from './core/services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -9,9 +10,12 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterModule, MatToolbarModule, MatButtonModule, CommonModule],
+  imports: [RouterModule, MatToolbarModule, MatButtonModule, CommonModule, MatIconModule],
   template: `
     <mat-toolbar color="primary" class="navbar">
+      <button *ngIf="isLoggedIn && isAdmin" mat-icon-button (click)="toggleSidenav.emit()" aria-label="Menú" class="mr-2">
+        <mat-icon>menu</mat-icon>
+      </button>
       <span class="logo" (click)="goHome()" style="cursor:pointer;">
         <span class="car-icon">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -24,7 +28,7 @@ import { CommonModule } from '@angular/common';
         <span class="brand">RentaFácil</span>
       </span>
       <span class="spacer"></span>
-      <a mat-button routerLink="/" [ngClass]="{active: isActive('/')}">Inicio</a>
+      <a mat-button routerLink="/" [ngClass]="{active: isActive('/')}" *ngIf="!isAdmin">Inicio</a>
       <ng-container *ngIf="!isLoggedIn">
         <a mat-button routerLink="/login" [ngClass]="{active: isActive('/login')}">Iniciar sesión</a>
         <a mat-button routerLink="/register" [ngClass]="{active: isActive('/register')}">Registrarse</a>
@@ -33,7 +37,10 @@ import { CommonModule } from '@angular/common';
         <a mat-button routerLink="/perfil" [ngClass]="{active: isActive('/perfil')}">Perfil</a>
         <a mat-button routerLink="/reservas" [ngClass]="{active: isActive('/reservas')}">Mis reservas</a>
         <a *ngIf="isAdmin" mat-button routerLink="/admin" [ngClass]="{active: isActive('/admin')}">Admin</a>
-        <button mat-button (click)="logout()">Salir</button>
+        <span class="user-greeting">Hola, {{ userName }}</span>
+        <button mat-icon-button (click)="logout()" aria-label="Cerrar sesión">
+          <mat-icon>logout</mat-icon>
+        </button>
       </ng-container>
     </mat-toolbar>
   `,
@@ -55,10 +62,13 @@ import { CommonModule } from '@angular/common';
 export class NavbarComponent {
   isLoggedIn = false;
   isAdmin = false;
+  userName = '';
+  @Input() toggleSidenav: any;
   constructor(public auth: AuthService, private router: Router) {
     this.auth.user$.subscribe(user => {
       this.isLoggedIn = !!user;
       this.isAdmin = user?.role === 'Admin';
+      this.userName = user?.nombre || user?.email || '';
     });
   }
   logout() {

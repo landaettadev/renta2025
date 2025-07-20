@@ -38,7 +38,21 @@ namespace VehicleService.API.Controllers
             };
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
-            return Ok(new { usuario.Id, usuario.Nombre, usuario.Email, usuario.Rol });
+
+            // Crear el registro en Client con los datos personales
+            var client = new Client
+            {
+                UsuarioId = usuario.Id,
+                FirstName = dto.Nombre, // O puedes separar en dto.FirstName si lo tienes
+                Email = dto.Email,
+                Phone = dto.Celular ?? "",
+                Ciudad = dto.Ciudad ?? "",
+                Direccion = dto.Direccion ?? ""
+            };
+            _context.Set<Client>().Add(client);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { usuario.Id, usuario.Nombre, usuario.Email, usuario.Rol, clientId = client.Id });
         }
 
         [HttpPost("login")]
@@ -48,8 +62,27 @@ namespace VehicleService.API.Controllers
             if (usuario == null || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
                 return Unauthorized("Credenciales inválidas.");
 
+            // Buscar datos personales en Client
+            var client = await _context.Set<Client>().FirstOrDefaultAsync(c => c.UsuarioId == usuario.Id);
+
             var token = GenerarJwt(usuario);
-            return Ok(new { token, usuario = new { usuario.Id, usuario.Nombre, usuario.Email, usuario.Rol } });
+            return Ok(new {
+                token,
+                usuario = new {
+                    usuario.Id,
+                    usuario.Nombre,
+                    usuario.Email,
+                    usuario.Rol,
+                    clientId = client?.Id,
+                    datosPersonales = client != null ? new {
+                        client.FirstName,
+                        client.Email,
+                        client.Phone,
+                        client.Ciudad,
+                        client.Direccion
+                    } : null
+                }
+            });
         }
 
         [HttpGet("all")]
@@ -75,6 +108,18 @@ namespace VehicleService.API.Controllers
             usuario.Rol = dto.Rol ?? usuario.Rol;
             await _context.SaveChangesAsync();
             return Ok(new { usuario.Id, usuario.Nombre, usuario.Email, usuario.Rol });
+        }
+
+        [HttpPut("{id}/password")]
+        public async Task<IActionResult> ChangePassword(int id, [FromBody] ChangePasswordDto dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return NotFound();
+            if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, usuario.PasswordHash))
+                return BadRequest("La contraseña actual es incorrecta.");
+            usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Contraseña actualizada correctamente." });
         }
 
         [HttpDelete("{id}")]

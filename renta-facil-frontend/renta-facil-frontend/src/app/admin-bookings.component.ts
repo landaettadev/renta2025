@@ -4,11 +4,33 @@ import { VehicleService, Vehicle } from './core/services/vehicle.service';
 import { Booking } from './core/models/booking.model';
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule, DatePipe } from '@angular/common';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 
 @Component({
   selector: 'app-admin-bookings',
   standalone: true,
-  imports: [MatCardModule, CommonModule, DatePipe],
+  imports: [
+    MatCardModule,
+    CommonModule,
+    DatePipe,
+    MatSelectModule,
+    MatIconModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    FormsModule,
+    MatDatepickerModule,
+    MatNativeDateModule
+  ],
   template: `
     <mat-card class="admin-bookings-card">
       <mat-card-title>Gestión de Reservas</mat-card-title>
@@ -22,8 +44,51 @@ import { CommonModule, DatePipe } from '@angular/common';
           </div>
         </div>
         <div><b>Usuario ID:</b> {{ b.clientId }}</div>
-        <div><b>Fechas:</b> {{ b.startDate | date }} - {{ b.endDate | date }}</div>
-        <div><b>Estado:</b> {{ b.status }}</div>
+        <div>
+          <b>Fechas:</b>
+          <ng-container *ngIf="editId === b.id; else viewDates">
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha de inicio</mat-label>
+              <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="editBooking.startDate" name="editStartDate" required [min]="today" [matDatepickerFilter]="dateFilter" />
+              <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+              <mat-datepicker #pickerInicio></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Fecha de fin</mat-label>
+              <input matInput [matDatepicker]="pickerFin" [(ngModel)]="editBooking.endDate" name="editEndDate" required [min]="editBooking.startDate || today" [disabled]="!editBooking.startDate" [matDatepickerFilter]="dateFilter" />
+              <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+              <mat-datepicker #pickerFin></mat-datepicker>
+            </mat-form-field>
+          </ng-container>
+          <ng-template #viewDates>
+            {{ b.startDate | date }} - {{ b.endDate | date }}
+          </ng-template>
+        </div>
+        <div>
+          <b>Estado:</b>
+          <ng-container *ngIf="editId === b.id; else viewStatus">
+            <mat-form-field appearance="outline">
+              <mat-label>Estado</mat-label>
+              <mat-select [(ngModel)]="editBooking.status" name="editStatus" required>
+                <mat-option value="Pending">Pendiente</mat-option>
+                <mat-option value="Confirmed">Confirmada</mat-option>
+                <mat-option value="Completed">Completada</mat-option>
+                <mat-option value="Cancelled">Cancelada</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </ng-container>
+          <ng-template #viewStatus>
+            {{ b.status || 'Pendiente' }}
+          </ng-template>
+        </div>
+        <ng-container *ngIf="editId === b.id; else editDeleteBtns">
+          <button mat-button color="primary" (click)="saveEdit()" [disabled]="!editBooking.startDate || !editBooking.endDate || editBooking.endDate < editBooking.startDate || !editBooking.status">Guardar</button>
+          <button mat-button (click)="cancelEdit()">Cancelar</button>
+        </ng-container>
+        <ng-template #editDeleteBtns>
+          <button mat-icon-button color="primary" (click)="startEdit(b)"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button color="warn" (click)="deleteBooking(b.id)"><mat-icon>delete</mat-icon></button>
+        </ng-template>
       </div>
     </mat-card>
   `,
@@ -50,6 +115,10 @@ import { CommonModule, DatePipe } from '@angular/common';
 })
 export class AdminBookingsComponent implements OnInit {
   bookings: (Booking & { vehicle?: Vehicle })[] = [];
+  editId: number | null = null;
+  editBooking: any = {};
+  today = new Date();
+
   constructor(
     private bookingService: BookingService,
     private vehicleService: VehicleService
@@ -71,5 +140,44 @@ export class AdminBookingsComponent implements OnInit {
       },
       error: () => this.bookings = []
     });
+  }
+
+  deleteBooking(id: number) {
+    if (confirm('¿Seguro que deseas eliminar esta reserva?')) {
+      this.bookingService.delete(id).subscribe(() => this.ngOnInit());
+    }
+  }
+
+  updateStatus(booking: Booking, newStatus: string) {
+    this.bookingService.updateStatus(booking.id, newStatus).subscribe(() => {
+      booking.status = newStatus;
+    });
+  }
+
+  startEdit(b: any) {
+    this.editId = b.id;
+    this.editBooking = { ...b };
+    if (!this.editBooking.status) this.editBooking.status = 'Pending';
+  }
+
+  cancelEdit() {
+    this.editId = null;
+    this.editBooking = {};
+  }
+
+  saveEdit() {
+    if (!this.editBooking.startDate || !this.editBooking.endDate || this.editBooking.endDate < this.editBooking.startDate) return;
+    this.bookingService.update(this.editBooking).subscribe(() => {
+      this.editId = null;
+      this.editBooking = {};
+      this.ngOnInit();
+    });
+  }
+
+  // Permitir solo fechas desde hoy en adelante
+  dateFilter = (d: Date | null): boolean => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return !d || d >= today;
   }
 } 

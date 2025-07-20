@@ -69,7 +69,11 @@ namespace BookingService.API.Application
                 ClientId = b.ClientId,
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
-                Estado = b.Estado
+                Estado = b.Estado,
+                Status = b.Estado == RentaFacil.Shared.EstadoReserva.Pendiente ? "Pending" :
+                        b.Estado == RentaFacil.Shared.EstadoReserva.Confirmada ? "Confirmed" :
+                        b.Estado == RentaFacil.Shared.EstadoReserva.Cancelada ? "Cancelled" :
+                        b.Estado == RentaFacil.Shared.EstadoReserva.Completada ? "Completed" : ""
             }).ToList();
         }
 
@@ -93,8 +97,38 @@ namespace BookingService.API.Application
                 ClientId = b.ClientId,
                 StartDate = b.StartDate,
                 EndDate = b.EndDate,
-                Estado = b.Estado
+                Estado = b.Estado,
+                Status = b.Estado == RentaFacil.Shared.EstadoReserva.Pendiente ? "Pending" :
+                        b.Estado == RentaFacil.Shared.EstadoReserva.Confirmada ? "Confirmed" :
+                        b.Estado == RentaFacil.Shared.EstadoReserva.Cancelada ? "Cancelled" :
+                        b.Estado == RentaFacil.Shared.EstadoReserva.Completada ? "Completed" : ""
             }).ToList();
+        }
+
+        public async Task<bool> UpdateBookingAsync(int id, BookingDto bookingDto)
+        {
+            var booking = await _context.Bookings.FindAsync(id);
+            if (booking == null) return false;
+            booking.StartDate = bookingDto.StartDate;
+            booking.EndDate = bookingDto.EndDate;
+            // Mapear status string a Estado (entero)
+            if (!string.IsNullOrEmpty(bookingDto.Status))
+            {
+                switch (bookingDto.Status)
+                {
+                    case "Pending": booking.Estado = RentaFacil.Shared.EstadoReserva.Pendiente; break;
+                    case "Confirmed": booking.Estado = RentaFacil.Shared.EstadoReserva.Confirmada; break;
+                    case "Cancelled": booking.Estado = RentaFacil.Shared.EstadoReserva.Cancelada; break;
+                    case "Completed": booking.Estado = RentaFacil.Shared.EstadoReserva.Completada; break;
+                }
+            }
+            else
+            {
+                booking.Estado = bookingDto.Estado;
+            }
+            await _context.SaveChangesAsync();
+            _logger.LogInformation($"Reserva {id} actualizada");
+            return true;
         }
 
         public async Task<List<BookingDetailDto>> GetBookingHistoryWithVehicleDetailsAsync(int clientId)

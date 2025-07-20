@@ -25,4 +25,20 @@ export class BookingService {
   cancel(bookingId: number, userId: number) {
     return this.http.post(`${this.apiUrl}/cancel`, { reservaId: bookingId, usuarioId: userId });
   }
+
+  getByVehicle(vehicleId: number) {
+    return this.http.get<Booking[]>(`${this.apiUrl}/vehicle/${vehicleId}`);
+  }
+
+  delete(id: number) {
+    return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  updateStatus(id: number, status: string) {
+    return this.http.patch(`${this.apiUrl}/${id}/status`, { status });
+  }
+
+  update(booking: any) {
+    return this.http.put(`${this.apiUrl}/${booking.id}`, booking);
+  }
 } 

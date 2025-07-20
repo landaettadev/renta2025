@@ -67,6 +67,22 @@ namespace BookingService.API.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateBooking(int id, [FromBody] BookingDto bookingDto)
+        {
+            try
+            {
+                var result = await _bookingService.UpdateBookingAsync(id, bookingDto);
+                if (!result) return NotFound();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error al actualizar reserva {id}");
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("history/{clientId}")]
         public async Task<IActionResult> GetBookingHistory(int clientId)
         {

@@ -26,8 +26,8 @@ export class AuthService {
     return this.http.post(`${environment.apiVehicle.replace('/api/vehicles','')}/api/auth/login`, { email, password });
   }
 
-  register(nombre: string, email: string, password: string): Observable<any> {
-    return this.http.post(`${environment.apiVehicle.replace('/api/vehicles','')}/api/auth/register`, { nombre, email, password, rol: 'Usuario' });
+  register(nombre: string, email: string, password: string, celular: string, ciudad: string, direccion: string): Observable<any> {
+    return this.http.post(`${environment.apiVehicle.replace('/api/vehicles','')}/api/auth/register`, { nombre, email, password, celular, ciudad, direccion, rol: 'Usuario' });
   }
 
   logout() {
@@ -36,8 +36,18 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  setToken(token: string) {
+  setToken(token: string, datosPersonales?: any, clientId?: number, userId?: number) {
     localStorage.setItem(this.tokenKey, token);
+    if (datosPersonales || clientId || userId) {
+      const datos = {
+        celular: datosPersonales?.phone || datosPersonales?.celular || '',
+        ciudad: datosPersonales?.ciudad || '',
+        direccion: datosPersonales?.direccion || '',
+        clientId: clientId ?? null,
+        userId: userId ?? null
+      };
+      localStorage.setItem('rf_user_personal', JSON.stringify(datos));
+    }
     this.userSubject.next(this.getUserFromToken());
   }
 
@@ -54,9 +64,22 @@ export class AuthService {
     if (!token) return null;
     try {
       const payload = jwtDecode<any>(token);
-      // Extraer el rol del claim estándar o del claim de Microsoft
       const role = payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
-      return { id: payload.sub, email: payload.email, nombre: payload.nombre, role };
+      let datosPersonales = { celular: '', ciudad: '', direccion: '', clientId: null, userId: null };
+      const stored = localStorage.getItem('rf_user_personal');
+      if (stored) {
+        try { datosPersonales = JSON.parse(stored); } catch {}
+      }
+      return {
+        id: datosPersonales.userId || payload.sub,
+        email: payload.email,
+        nombre: payload.nombre,
+        role,
+        celular: datosPersonales.celular || '',
+        ciudad: datosPersonales.ciudad || '',
+        direccion: datosPersonales.direccion || '',
+        clientId: datosPersonales.clientId || null
+      };
     } catch {
       return null;
     }
@@ -77,5 +100,13 @@ export class AuthService {
 
   deleteUser(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  updateClient(id: number, data: any): Observable<any> {
+    return this.http.put<any>(`${environment.apiVehicle.replace('/api/vehicles','')}/api/clients/${id}`, data);
+  }
+
+  changePassword(id: number, currentPassword: string, newPassword: string): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}/password`, { currentPassword, newPassword });
   }
 } 

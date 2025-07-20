@@ -4,7 +4,8 @@
     {
         Pendiente,
         Confirmada,
-        Cancelada
+        Cancelada,
+        Completada
     }
 
     public class CancelarReservaDto
