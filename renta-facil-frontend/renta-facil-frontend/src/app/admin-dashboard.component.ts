@@ -5,81 +5,56 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSidenavModule } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [RouterModule, MatCardModule, MatButtonModule, MatIconModule, CommonModule, MatSlideToggleModule],
+  imports: [RouterModule, MatCardModule, MatButtonModule, MatIconModule, CommonModule, MatSidenavModule],
   template: `
-    <div class="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <header class="w-full flex items-center justify-between px-6 py-3 bg-white/80 dark:bg-gray-900/80 shadow-sm">
-        <div class="flex items-center gap-3">
-          <mat-icon class="text-blue-600 dark:text-blue-400 text-2xl">admin_panel_settings</mat-icon>
-          <span class="font-semibold text-blue-900 dark:text-blue-200 text-lg">Panel de Administración</span>
-        </div>
-        <div class="flex items-center gap-4">
-          <mat-slide-toggle color="primary" [checked]="darkMode" (change)="toggleDarkMode()" class="dark-toggle" aria-label="Modo oscuro">
-            <mat-icon class="mr-1">{{ darkMode ? 'dark_mode' : 'light_mode' }}</mat-icon>
-          </mat-slide-toggle>
-          <span class="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
-            <mat-icon class="text-green-500 text-base">cloud_done</mat-icon> <span>Conectado</span>
-          </span>
-          <span class="text-sm text-gray-500 dark:text-gray-400">{{ now | date:'mediumTime' }}</span>
-          <span class="flex items-center gap-1 text-sm text-blue-800 dark:text-blue-200 font-semibold">
-            <mat-icon class="text-base">person</mat-icon> {{ userName }}
-          </span>
-          <button mat-icon-button (click)="logout()" aria-label="Cerrar sesión">
-            <mat-icon>logout</mat-icon>
-          </button>
-        </div>
-      </header>
-      <main class="flex-1 flex items-center justify-center">
-        <mat-card class="admin-dashboard-card shadow-xl rounded-2xl bg-white dark:bg-gray-900 transition-colors duration-300">
-          <div class="flex items-center justify-center gap-2 mb-2">
-            <mat-icon class="text-blue-600 dark:text-blue-400 text-3xl">dashboard</mat-icon>
-            <span class="text-2xl font-bold text-blue-800 dark:text-blue-200">Panel principal</span>
+    <div class="min-h-screen flex bg-gradient-to-br from-blue-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <mat-sidenav-container class="admin-sidenav-container">
+        <mat-sidenav mode="side" opened class="admin-sidenav">
+          <div class="sidenav-title">Panel de Administración</div>
+          <nav class="sidenav-menu">
+            <a mat-list-item routerLink="/admin/vehiculos" routerLinkActive="active"><mat-icon>directions_car</mat-icon> Gestión de Vehículos</a>
+            <a mat-list-item routerLink="/admin/reservas" routerLinkActive="active"><mat-icon>event_note</mat-icon> Gestión de Reservas</a>
+            <a mat-list-item routerLink="/admin/usuarios" routerLinkActive="active"><mat-icon>group</mat-icon> Gestión de Usuarios</a>
+            <a mat-list-item routerLink="/admin/reportes" routerLinkActive="active"><mat-icon>bar_chart</mat-icon> Ver Reportes</a>
+          </nav>
+        </mat-sidenav>
+        <mat-sidenav-content>
+          <div class="admin-content-center">
+            <mat-card class="admin-dashboard-card shadow-xl rounded-2xl bg-white dark:bg-gray-900 transition-colors duration-300">
+              <div class="flex items-center justify-center gap-2 mb-2">
+                <mat-icon class="text-blue-600 dark:text-blue-400 text-3xl">dashboard</mat-icon>
+                <span class="text-2xl font-bold text-blue-800 dark:text-blue-200">Panel principal</span>
+              </div>
+              <div class="text-gray-500 dark:text-gray-300 mb-6 text-base font-semibold tracking-wide text-center" style="font-size:1.13rem;">Gestiona los recursos principales del sistema</div>
+            </mat-card>
           </div>
-          <div class="text-gray-500 dark:text-gray-300 mb-6 text-base font-semibold tracking-wide text-center" style="font-size:1.13rem;">Gestiona los recursos principales del sistema</div>
-          <div class="admin-actions flex flex-col items-stretch w-full mt-6 gap-4">
-            <a mat-raised-button color="primary" class="btn block w-full flex items-center gap-4 justify-start py-4 px-6 text-base font-semibold shadow-none rounded-lg border-0 border-b border-b-gray-200 dark:border-b-gray-700 transition hover:bg-blue-50 dark:hover:bg-blue-900 focus-visible:ring-2 focus-visible:ring-blue-400" routerLink="/admin/vehiculos">
-              <mat-icon class="text-xl">directions_car</mat-icon> Gestión de Vehículos
-            </a>
-            <a mat-raised-button color="accent" class="btn block w-full flex items-center gap-4 justify-start py-4 px-6 text-base font-semibold shadow-none rounded-lg border-0 border-b border-b-gray-200 dark:border-b-gray-700 transition hover:bg-blue-50 dark:hover:bg-blue-900 focus-visible:ring-2 focus-visible:ring-blue-400" routerLink="/admin/reservas">
-              <mat-icon class="text-xl">event_note</mat-icon> Gestión de Reservas
-            </a>
-            <a mat-raised-button color="warn" class="btn block w-full flex items-center gap-4 justify-start py-4 px-6 text-base font-semibold shadow-none rounded-lg border-0 border-b border-b-gray-200 dark:border-b-gray-700 transition hover:bg-red-50 dark:hover:bg-red-900 focus-visible:ring-2 focus-visible:ring-red-400" routerLink="/admin/usuarios">
-              <mat-icon class="text-xl">group</mat-icon> Gestión de Usuarios
-            </a>
-            <a mat-raised-button color="default" class="btn block w-full flex items-center gap-4 justify-start py-4 px-6 text-base font-semibold shadow-none rounded-lg border-0 transition hover:bg-gray-100 dark:hover:bg-gray-800 focus-visible:ring-2 focus-visible:ring-gray-400" routerLink="/admin/reportes">
-              <mat-icon class="text-xl">bar_chart</mat-icon> Ver Reportes
-            </a>
-          </div>
-        </mat-card>
-      </main>
+        </mat-sidenav-content>
+      </mat-sidenav-container>
     </div>
   `,
   styles: [`
-    .btn:hover, .btn:focus-visible {
-      transform: scale(1.03);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    .admin-sidenav-container { height: 100vh; }
+    .admin-sidenav { width: 260px; background: #f5f7fa; padding-top: 32px; }
+    .sidenav-title { font-size: 1.25rem; font-weight: 700; color: #1976d2; margin-bottom: 32px; text-align: center; }
+    .sidenav-menu { display: flex; flex-direction: column; gap: 8px; }
+    .sidenav-menu a { display: flex; align-items: center; gap: 12px; font-size: 1.08rem; font-weight: 600; color: #333; padding: 12px 18px; border-radius: 8px; text-decoration: none; transition: background 0.18s; }
+    .sidenav-menu a.active, .sidenav-menu a:hover { background: #e3e9fc; color: #1976d2; }
+    .admin-content-center { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+    .admin-dashboard-card { width: 100%; max-width: 480px; margin: 0 auto; padding: 32px 24px; border-radius: 18px; text-align: center; background: #fff; display: flex; flex-direction: column; align-items: center; }
+    @media (max-width: 900px) {
+      .admin-sidenav { width: 100px; padding-top: 16px; }
+      .sidenav-title { font-size: 1rem; margin-bottom: 16px; }
+      .sidenav-menu a { font-size: 0.98rem; padding: 10px 8px; }
     }
-    .admin-dashboard-card {
-      width: 100%;
-      max-width: 480px;
-      margin: 48px auto 0 auto;
-      padding: 32px 24px;
-      border-radius: 18px;
-      text-align: center;
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .dark-toggle { margin-right: 8px; }
     @media (max-width: 600px) {
+      .admin-sidenav-container { flex-direction: column; }
+      .admin-content-center { height: auto; min-height: 60vh; }
       .admin-dashboard-card { padding: 12px 4px; }
-      .admin-actions { max-width: 100%; }
     }
   `]
 })

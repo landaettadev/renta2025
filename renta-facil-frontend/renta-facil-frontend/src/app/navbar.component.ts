@@ -13,9 +13,6 @@ import { CommonModule } from '@angular/common';
   imports: [RouterModule, MatToolbarModule, MatButtonModule, CommonModule, MatIconModule],
   template: `
     <mat-toolbar color="primary" class="navbar">
-      <button *ngIf="isLoggedIn && isAdmin" mat-icon-button (click)="toggleSidenav.emit()" aria-label="Menú" class="mr-2">
-        <mat-icon>menu</mat-icon>
-      </button>
       <span class="logo" (click)="goHome()" style="cursor:pointer;">
         <span class="car-icon">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -35,8 +32,8 @@ import { CommonModule } from '@angular/common';
       </ng-container>
       <ng-container *ngIf="isLoggedIn">
         <a mat-button routerLink="/perfil" [ngClass]="{active: isActive('/perfil')}">Perfil</a>
-        <a mat-button routerLink="/reservas" [ngClass]="{active: isActive('/reservas')}">Mis reservas</a>
-        <a *ngIf="isAdmin" mat-button routerLink="/admin" [ngClass]="{active: isActive('/admin')}">Admin</a>
+        <a mat-button routerLink="/reservas" [ngClass]="{active: isActive('/reservas')}" *ngIf="!isAdmin">Mis reservas</a>
+        <a *ngIf="isAdmin" mat-button routerLink="/admin" [ngClass]="{active: isActive('/admin')}">Panel administrativo</a>
         <span class="user-greeting">Hola, {{ userName }}</span>
         <button mat-icon-button (click)="logout()" aria-label="Cerrar sesión">
           <mat-icon>logout</mat-icon>

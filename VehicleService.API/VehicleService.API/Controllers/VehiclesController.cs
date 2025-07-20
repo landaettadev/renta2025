@@ -42,7 +42,9 @@ namespace VehicleService.API.Controllers
                     var sasToken = _configuration["AzureBlob:SasToken"];
                     var blobName = $"{Guid.NewGuid()}_{imageFile.FileName}";
                     var blobUri = $"{containerUrl}/{blobName}?{sasToken}";
-                    _logger.LogError($"Blob URI: {blobUri}");
+                    _logger.LogError($"[DEBUG SAS] ContainerUrl: {containerUrl}");
+                    _logger.LogError($"[DEBUG SAS] SasToken (completo): {sasToken}");
+                    _logger.LogError($"[DEBUG SAS] Blob URI (completa): {blobUri}");
                     var blobClient = new BlockBlobClient(new Uri(blobUri));
                     using (var stream = imageFile.OpenReadStream())
                     {
@@ -64,6 +66,7 @@ namespace VehicleService.API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError($"[DEBUG SAS] Exception: {ex.Message}");
                 _logger.LogError(ex, "Error al registrar vehículo");
                 return BadRequest(ex.Message);
             }

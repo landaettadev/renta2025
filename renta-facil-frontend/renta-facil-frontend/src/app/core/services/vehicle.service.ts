@@ -32,11 +32,11 @@ export class VehicleService {
 
   register(vehicle: any, imageFile?: File): Observable<any> {
     const formData = new FormData();
-    formData.append('brand', vehicle.brand);
-    formData.append('model', vehicle.model);
-    formData.append('type', vehicle.type);
-    formData.append('licensePlate', vehicle.licensePlate);
-    formData.append('isAvailable', vehicle.isAvailable);
+    formData.append('LicensePlate', vehicle.licensePlate);
+    formData.append('Brand', vehicle.brand);
+    formData.append('Model', vehicle.model);
+    formData.append('Type', vehicle.type);
+    formData.append('IsAvailable', String(vehicle.isAvailable));
     if (imageFile) {
       formData.append('imageFile', imageFile, imageFile.name);
     }
