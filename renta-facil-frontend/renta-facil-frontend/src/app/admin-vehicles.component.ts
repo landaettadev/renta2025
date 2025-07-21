@@ -72,7 +72,7 @@ import { VehicleService, Vehicle } from './core/services/vehicle.service';
       <mat-card class="admin-vehicle-list">
         <mat-card-title>Vehículos Registrados</mat-card-title>
         <div class="vehicle-list">
-          <div class="vehicle-list-card" *ngFor="let v of vehicles">
+          <div class="vehicle-list-card" *ngFor="let v of pagedVehicles">
             <img [src]="v.image || 'https://cdn.pixabay.com/photo/2012/05/29/00/43/car-49278_1280.jpg'" class="list-img" />
             <div class="vehicle-info">
               <div class="vehicle-title">{{ v.brand }} {{ v.model }} <span class="vehicle-type">({{ v.type }})</span></div>
@@ -95,6 +95,11 @@ import { VehicleService, Vehicle } from './core/services/vehicle.service';
               </button>
             </div>
           </div>
+        </div>
+        <div class="pagination">
+          <button mat-stroked-button (click)="goToPage(currentPage-1)" [disabled]="currentPage === 1">Anterior</button>
+          <span>Página {{currentPage}} de {{totalPages}}</span>
+          <button mat-stroked-button (click)="goToPage(currentPage+1)" [disabled]="currentPage === totalPages">Siguiente</button>
         </div>
       </mat-card>
     </div>
@@ -259,6 +264,13 @@ import { VehicleService, Vehicle } from './core/services/vehicle.service';
       font-size: 2.2rem;
       transition: color 0.18s;
     }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      margin: 18px 0 0 0;
+    }
   `]
 })
 export class AdminVehiclesComponent implements OnInit {
@@ -268,6 +280,18 @@ export class AdminVehiclesComponent implements OnInit {
   error = '';
   success = false;
   imageFile: File | null = null;
+  currentPage: number = 1;
+  pageSize: number = 10;
+  get pagedVehicles() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.vehicles.slice(start, start + this.pageSize);
+  }
+  get totalPages() {
+    return Math.ceil(this.vehicles.length / this.pageSize) || 1;
+  }
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) this.currentPage = page;
+  }
   constructor(private vehicleService: VehicleService, private snackBar: MatSnackBar) {}
   ngOnInit() {
     this.loadVehicles();

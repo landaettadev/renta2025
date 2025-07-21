@@ -29,7 +29,7 @@ import { MatIconModule } from '@angular/material/icon';
         </form>
       </div>
       <div *ngIf="filteredUsers.length === 0" class="empty">No hay usuarios registrados.</div>
-      <div *ngFor="let u of filteredUsers; let i = index" class="user-item">
+      <div *ngFor="let u of pagedFilteredUsers; let i = index" class="user-item">
         <form [formGroup]="editForms[u.id]" (ngSubmit)="onUpdate(u.id)" *ngIf="editingId === u.id; else viewMode" class="edit-user-form">
           <span class="emoji">✏️</span>
           <input matInput formControlName="nombre" placeholder="Nombre" />
@@ -50,6 +50,11 @@ import { MatIconModule } from '@angular/material/icon';
             <button mat-icon-button color="warn" (click)="onDelete(u.id)" title="Eliminar"><span class="emoji">🗑️</span></button>
           </div>
         </ng-template>
+      </div>
+      <div class="pagination">
+        <button mat-stroked-button (click)="goToPage(currentPage-1)" [disabled]="currentPage === 1">Anterior</button>
+        <span>Página {{currentPage}} de {{totalPages}}</span>
+        <button mat-stroked-button (click)="goToPage(currentPage+1)" [disabled]="currentPage === totalPages">Siguiente</button>
       </div>
     </mat-card>
   `,
@@ -131,6 +136,13 @@ import { MatIconModule } from '@angular/material/icon';
     .empty { color: #888; margin: 24px 0; text-align: center; }
     input[matInput] { margin-right: 8px; margin-bottom: 8px; }
     button { margin-right: 8px; }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      margin: 18px 0 0 0;
+    }
   `]
 })
 export class AdminUsersComponent implements OnInit {
@@ -139,6 +151,8 @@ export class AdminUsersComponent implements OnInit {
   editForms: { [id: number]: FormGroup } = {};
   filterName: string = '';
   filterEmail: string = '';
+  currentPage: number = 1;
+  pageSize: number = 10;
 
   constructor(private auth: AuthService, private fb: FormBuilder) {}
 
@@ -196,5 +210,16 @@ export class AdminUsersComponent implements OnInit {
       }
       return nameOk && emailOk;
     });
+  }
+
+  get pagedFilteredUsers() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredUsers.slice(start, start + this.pageSize);
+  }
+  get totalPages() {
+    return Math.ceil(this.filteredUsers.length / this.pageSize) || 1;
+  }
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) this.currentPage = page;
   }
 } 

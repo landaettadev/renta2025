@@ -58,4 +58,8 @@ export class VehicleService {
     if (endDate) params = params.set('endDate', endDate);
     return this.http.get<Vehicle[]>(`${this.apiUrl}/available`, { params });
   }
+
+  getBookedDates(vehicleId: number): Observable<string[]> {
+    return this.http.get<string[]>(`${environment.apiBooking}/vehicle/${vehicleId}/booked-dates`);
+  }
 } 

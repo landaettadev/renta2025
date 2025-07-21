@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using RentaFacil.Shared.DTOs;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using RentaFacil.Shared;
 
 namespace BookingService.API.Controllers
 {
@@ -127,6 +129,32 @@ namespace BookingService.API.Controllers
                 _logger.LogError(ex, "Error al obtener reservas");
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpGet("vehicle/{vehicleId}/booked-dates")]
+        public async Task<IActionResult> GetBookedDatesByVehicle(int vehicleId)
+        {
+            // Buscar reservas confirmadas para el vehículo
+            var bookings = await _bookingService.GetBookingsByVehicleAsync(vehicleId);
+            var bookedDates = new List<string>();
+            foreach (var booking in bookings)
+            {
+                if (booking.Estado == EstadoReserva.Confirmada)
+                {
+                    for (var date = booking.StartDate.Date; date <= booking.EndDate.Date; date = date.AddDays(1))
+                    {
+                        bookedDates.Add(date.ToString("yyyy-MM-dd"));
+                    }
+                }
+            }
+            return Ok(bookedDates);
+        }
+
+        [HttpGet("vehicle/{vehicleId}")]
+        public async Task<IActionResult> GetBookingsByVehicle(int vehicleId)
+        {
+            var bookings = await _bookingService.GetBookingsByVehicleAsync(vehicleId);
+            return Ok(bookings);
         }
     }
 } 

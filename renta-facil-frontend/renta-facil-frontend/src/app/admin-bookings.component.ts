@@ -71,7 +71,7 @@ import { AuthService } from './core/services/auth.service';
           </form>
         </div>
         <div *ngIf="filteredBookings.length === 0" class="empty">No hay reservas registradas.</div>
-        <div *ngFor="let b of filteredBookings" class="booking-item">
+        <div *ngFor="let b of pagedFilteredBookings" class="booking-item">
           <div class="client-info">
             <mat-icon class="client-icon">person</mat-icon>
             <span class="client-name"><b>{{ b.client?.nombre || b.client?.Nombre || b.clientId }}</b></span>
@@ -133,6 +133,11 @@ import { AuthService } from './core/services/auth.service';
           </ng-template>
         </div>
       </mat-card>
+      <div class="pagination">
+        <button mat-stroked-button (click)="goToPage(currentPage-1)" [disabled]="currentPage === 1">Anterior</button>
+        <span>Página {{currentPage}} de {{totalPages}}</span>
+        <button mat-stroked-button (click)="goToPage(currentPage+1)" [disabled]="currentPage === totalPages">Siguiente</button>
+      </div>
     </div>
   `,
   styles: [`
@@ -245,6 +250,13 @@ import { AuthService } from './core/services/auth.service';
     .chip-confirmada { background: #e3fcef !important; color: #388e3c !important; font-weight: 600; }
     .chip-cancelada { background: #ffeaea !important; color: #d32f2f !important; font-weight: 600; }
     .chip-completada { background: #e3e9fc !important; color: #1976d2 !important; font-weight: 600; }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      margin: 18px 0 0 0;
+    }
   `]
 })
 export class AdminBookingsComponent implements OnInit {
@@ -258,6 +270,8 @@ export class AdminBookingsComponent implements OnInit {
   filterUserName: string = '';
   filterUserEmail: string = '';
   filterPlate: string = '';
+  currentPage: number = 1;
+  pageSize: number = 10;
 
   constructor(
     private bookingService: BookingService,
@@ -396,5 +410,16 @@ export class AdminBookingsComponent implements OnInit {
       }
       return dateOk && nameOk && emailOk && plateOk;
     });
+  }
+
+  get pagedFilteredBookings() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredBookings.slice(start, start + this.pageSize);
+  }
+  get totalPages() {
+    return Math.ceil(this.filteredBookings.length / this.pageSize) || 1;
+  }
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) this.currentPage = page;
   }
 } 

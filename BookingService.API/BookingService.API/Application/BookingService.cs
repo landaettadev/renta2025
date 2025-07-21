@@ -9,7 +9,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.Json;
-using RentaFacil.Shared.DTOs;
 
 namespace BookingService.API.Application
 {
@@ -164,7 +163,7 @@ namespace BookingService.API.Application
                         StartDate = b.StartDate,
                         EndDate = b.EndDate,
                         Status = b.Estado.ToString(),
-                        Estado = b.Estado,
+                        Estado = (int)b.Estado,
                         VehicleBrand = vehicle?.Brand ?? string.Empty,
                         VehicleModel = vehicle?.Model ?? string.Empty,
                         VehicleType = vehicle?.Type ?? string.Empty,
@@ -179,6 +178,27 @@ namespace BookingService.API.Application
                 }
             }
             return result;
+        }
+
+        public async Task<List<BookingDto>> GetBookingsByVehicleAsync(int vehicleId)
+        {
+            var bookings = await _context.Bookings
+                .Where(b => b.VehicleId == vehicleId)
+                .OrderByDescending(b => b.CreatedAt)
+                .ToListAsync();
+            return bookings.Select(b => new BookingDto
+            {
+                Id = b.Id,
+                VehicleId = b.VehicleId,
+                ClientId = b.ClientId,
+                StartDate = b.StartDate,
+                EndDate = b.EndDate,
+                Estado = b.Estado,
+                Status = b.Estado == RentaFacil.Shared.EstadoReserva.Pendiente ? "Pending" :
+                        b.Estado == RentaFacil.Shared.EstadoReserva.Confirmada ? "Confirmed" :
+                        b.Estado == RentaFacil.Shared.EstadoReserva.Cancelada ? "Cancelled" :
+                        b.Estado == RentaFacil.Shared.EstadoReserva.Completada ? "Completed" : ""
+            }).ToList();
         }
     }
 } 

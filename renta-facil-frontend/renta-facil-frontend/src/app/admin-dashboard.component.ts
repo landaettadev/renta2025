@@ -20,7 +20,6 @@ import { MatSidenavModule } from '@angular/material/sidenav';
             <a mat-list-item routerLink="/admin/vehiculos" routerLinkActive="active"><mat-icon>directions_car</mat-icon> Gestión de Vehículos</a>
             <a mat-list-item routerLink="/admin/reservas" routerLinkActive="active"><mat-icon>event_note</mat-icon> Gestión de Reservas</a>
             <a mat-list-item routerLink="/admin/usuarios" routerLinkActive="active"><mat-icon>group</mat-icon> Gestión de Usuarios</a>
-            <a mat-list-item routerLink="/admin/reportes" routerLinkActive="active"><mat-icon>bar_chart</mat-icon> Ver Reportes</a>
           </nav>
         </mat-sidenav>
         <mat-sidenav-content>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +13,7 @@ import { VehicleService, Vehicle } from './core/services/vehicle.service';
 import { BookingService } from './core/services/booking.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from './core/services/auth.service';
+import { MatCalendar } from '@angular/material/datepicker';
 
 @Component({
   selector: 'app-booking-create',
@@ -72,7 +73,7 @@ import { AuthService } from './core/services/auth.service';
       <div class="calendar-separator"></div>
       <div class="calendar-availability-section">
         <div class="calendar-availability-msg">🗓️ Revisa la disponibilidad del artículo</div>
-        <mat-calendar [selected]="todayDate" [startAt]="todayDate" [dateClass]="dateClass" [dateFilter]="calendarDateFilter"></mat-calendar>
+        <mat-calendar [selected]="todayDate" [startAt]="todayDate" [dateClass]="dateClass" [dateFilter]="dateFilter"></mat-calendar>
         <div class="calendar-legend">
           <span class="legend-box occupied"></span> Ocupado
           <span class="legend-box free"></span> Libre
@@ -207,6 +208,13 @@ import { AuthService } from './core/services/auth.service';
       box-shadow: 0 2px 12px rgba(0,0,0,0.07);
       padding: 8px 0 8px 0;
     }
+    ::ng-deep .booked-date {
+      background-color: #ff7f7f !important;
+      border-radius: 100%;
+      color: white !important;
+      font-weight: bold;
+      text-decoration: line-through;
+    }
   `]
 })
 export class BookingCreateComponent implements OnInit {
@@ -220,6 +228,8 @@ export class BookingCreateComponent implements OnInit {
   existingBookings: any[] = [];
   overlapWarning: string = '';
   reservedDates: Set<string> = new Set();
+  bookedDates: string[] = [];
+  @ViewChild(MatCalendar) calendar!: MatCalendar<Date>;
 
   get minDevolucion() {
     return this.booking.startDate ? this.booking.startDate : this.todayDate;
@@ -237,8 +247,10 @@ export class BookingCreateComponent implements OnInit {
     this.selectedVehicle = this.vehicles.find(v => v.id === vehicleId) || null;
     if (vehicleId) {
       this.loadExistingBookings(vehicleId);
+      this.loadBookedDates(vehicleId);
     } else {
       this.existingBookings = [];
+      this.bookedDates = [];
     }
     this.checkOverlap();
   }
@@ -262,6 +274,7 @@ export class BookingCreateComponent implements OnInit {
             this.selectedVehicle = vehicle;
             this.booking.vehicleId = vehicle.id;
             this.loadExistingBookings(vehicle.id);
+            this.loadBookedDates(vehicle.id);
           }
         }
         // Leer fechas de query params
@@ -279,20 +292,34 @@ export class BookingCreateComponent implements OnInit {
     this.bookingService.getByVehicle(vehicleId).subscribe({
       next: (bookings) => {
         this.existingBookings = bookings;
-        // Generar set de fechas reservadas (YYYY-MM-DD)
-        this.reservedDates = new Set();
-        bookings.forEach(b => {
-          const start = new Date(b.startDate);
-          const end = new Date(b.endDate);
-          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            this.reservedDates.add(d.toISOString().slice(0, 10));
-          }
-        });
-        this.checkOverlap();
       },
-      error: () => {
-        this.existingBookings = [];
-        this.reservedDates = new Set();
+      error: (err) => {
+        if (err.status === 404) {
+          this.existingBookings = [];
+        } else {
+          this.error = 'Error al cargar reservas existentes';
+        }
+      }
+    });
+  }
+
+  loadBookedDates(vehicleId: number) {
+    this.vehicleService.getBookedDates(vehicleId).subscribe({
+      next: (dates) => {
+        this.bookedDates = dates;
+        // Forzar refresco visual del calendario
+        if (this.calendar) {
+          this.calendar.updateTodaysDate();
+        }
+      },
+      error: (err) => {
+        // Si es 404, simplemente no hay días ocupados
+        if (err.status === 404) {
+          this.bookedDates = [];
+          if (this.calendar) {
+            this.calendar.updateTodaysDate();
+          }
+        } // No mostrar ningún error al usuario
       }
     });
   }
@@ -321,6 +348,17 @@ export class BookingCreateComponent implements OnInit {
       this.error = 'Debes seleccionar una fecha de inicio y una de fin.';
       return;
     }
+    // Validar que el rango no incluya días ocupados
+    let d = new Date(this.booking.startDate);
+    const end = new Date(this.booking.endDate);
+    while (d <= end) {
+      const dateStr = d.toISOString().slice(0, 10);
+      if (this.bookedDates.includes(dateStr)) {
+        this.error = 'El vehículo ya está reservado en el rango seleccionado.';
+        return;
+      }
+      d.setDate(d.getDate() + 1);
+    }
     this.checkOverlap();
     if (this.overlapWarning) {
       this.error = this.overlapWarning;
@@ -338,25 +376,29 @@ export class BookingCreateComponent implements OnInit {
     };
     this.bookingService.create(bookingToSend).subscribe({
       next: () => {
-        this.loading = false;
         this.success = true;
-        setTimeout(() => this.router.navigate(['/reservas']), 1500);
+        this.loading = false;
+        this.error = '';
+        this.loadExistingBookings(this.booking.vehicleId!);
+        this.loadBookedDates(this.booking.vehicleId!);
       },
       error: (err) => {
+        this.error = err.error || 'Error al crear la reserva';
         this.loading = false;
-        this.error = err.error || 'Error al crear la reserva.';
       }
     });
   }
 
-  // Filtro para bloquear días reservados en el calendario
+  // Filtro para bloquear días ocupados en el calendario
   dateFilter = (d: Date | null): boolean => {
+    if (!d) return false;
     const today = new Date();
     today.setHours(0,0,0,0);
-    if (!d || d < today) return false;
-    const iso = d.toISOString().slice(0, 10);
-    return !this.reservedDates.has(iso);
-  }
+    if (d < today) return false;
+    const dateStr = d.toISOString().slice(0, 10);
+    // Solo permite seleccionar días que no estén ocupados
+    return !this.bookedDates.includes(dateStr);
+  };
 
   // Filtro para bloquear días pasados y marcar ocupados en el calendario de disponibilidad
   calendarDateFilter = (d: Date | null): boolean => {
@@ -367,9 +409,8 @@ export class BookingCreateComponent implements OnInit {
   }
 
   // Función para marcar los días ocupados en el calendario
-  dateClass = (d: Date) => {
-    const iso = d.toISOString().slice(0, 10);
-    if (this.reservedDates.has(iso)) return 'calendar-occupied calendar-strikethrough';
-    return '';
-  }
+  dateClass = (d: Date): string => {
+    const dateStr = d.toISOString().slice(0, 10);
+    return this.bookedDates.includes(dateStr) ? 'booked-date' : '';
+  };
 } 

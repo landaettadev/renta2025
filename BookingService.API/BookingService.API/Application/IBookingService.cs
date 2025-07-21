@@ -13,5 +13,6 @@ namespace BookingService.API.Application
         Task<List<BookingDto>> GetAllBookingsAsync();
         Task<List<RentaFacil.Shared.DTOs.BookingDetailDto>> GetBookingHistoryWithVehicleDetailsAsync(int clientId);
         Task<bool> UpdateBookingAsync(int id, BookingDto bookingDto);
+        Task<List<BookingDto>> GetBookingsByVehicleAsync(int vehicleId);
     }
 } 
