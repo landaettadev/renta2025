@@ -11,9 +11,8 @@ services:
       - "5000:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=BookingDb;User=sa;Password=Your_password123;
-    depends_on:
-      - db
+      - ConnectionStrings__DefaultConnection=Server=rentaserver2025.database.windows.net;Database=rentafacil;User Id=adminsql;Password=Admin@2025Sql!;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+      - ASPNETCORE_URLS=http://+:5000
     networks:
       - rentafacilnet
 
@@ -27,9 +26,8 @@ services:
       - "5001:5001"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=VehicleDb;User=sa;Password=Your_password123;
-    depends_on:
-      - db
+      - ConnectionStrings__DefaultConnection=Server=rentaserver2025.database.windows.net;Database=rentafacil;User Id=adminsql;Password=Admin@2025Sql!;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+      - ASPNETCORE_URLS=http://+:5001
     networks:
       - rentafacilnet
 
@@ -41,9 +39,7 @@ services:
     container_name: rentafacilworker
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=WorkerDb;User=sa;Password=Your_password123;
-    depends_on:
-      - db
+      - ConnectionStrings__DefaultConnection=Server=rentaserver2025.database.windows.net;Database=rentafacil;User Id=adminsql;Password=Admin@2025Sql!;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
     networks:
       - rentafacilnet
 
@@ -56,21 +52,21 @@ services:
     networks:
       - rentafacilnet
 
-  db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: rentafacildb
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=Your_password123
-    ports:
-      - "1433:1433"
-    networks:
-      - rentafacilnet
-    healthcheck:
-      test: ["CMD-SHELL", "sqlcmd -S localhost -U sa -P Your_password123 -Q 'SELECT 1' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+#  db:
+#    image: mcr.microsoft.com/mssql/server:2022-latest
+#    container_name: rentafacildb
+#    environment:
+#      - ACCEPT_EULA=Y
+#      - SA_PASSWORD=Your_password123
+#    ports:
+#      - "1433:1433"
+#    networks:
+#      - rentafacilnet
+#    healthcheck:
+#      test: ["CMD-SHELL", "sqlcmd -S localhost -U sa -P Your_password123 -Q 'SELECT 1' || exit 1"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
 
 networks:
   rentafacilnet:
