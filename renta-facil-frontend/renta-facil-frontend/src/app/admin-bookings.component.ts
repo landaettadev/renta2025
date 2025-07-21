@@ -32,69 +32,80 @@ import { MatNativeDateModule } from '@angular/material/core';
     MatNativeDateModule
   ],
   template: `
-    <mat-card class="admin-bookings-card">
-      <mat-card-title>Gestión de Reservas</mat-card-title>
-      <div *ngIf="bookings.length === 0" class="empty">No hay reservas registradas.</div>
-      <div *ngFor="let b of bookings" class="booking-item">
-        <div class="vehicle-info">
-          <img [src]="b.vehicle?.image || 'https://cdn.pixabay.com/photo/2012/05/29/00/43/car-49278_1280.jpg'" width="80" height="50" style="object-fit:cover; border-radius:6px; margin-right:12px;" />
-          <div>
-            <div><b>{{ b.vehicle?.brand }} {{ b.vehicle?.model }}</b> ({{ b.vehicle?.type }})</div>
-            <div>Placa: {{ b.vehicle?.licensePlate }}</div>
+    <div class="admin-bookings-wrapper">
+      <mat-card class="admin-bookings-card">
+        <mat-card-title>Gestión de Reservas</mat-card-title>
+        <div *ngIf="bookings.length === 0" class="empty">No hay reservas registradas.</div>
+        <div *ngFor="let b of bookings" class="booking-item">
+          <div class="vehicle-info">
+            <img [src]="b.vehicle?.image || 'https://cdn.pixabay.com/photo/2012/05/29/00/43/car-49278_1280.jpg'" width="80" height="50" style="object-fit:cover; border-radius:6px; margin-right:12px;" />
+            <div>
+              <div><b>{{ b.vehicle?.brand }} {{ b.vehicle?.model }}</b> ({{ b.vehicle?.type }})</div>
+              <div>Placa: {{ b.vehicle?.licensePlate }}</div>
+            </div>
           </div>
-        </div>
-        <div><b>Usuario ID:</b> {{ b.clientId }}</div>
-        <div>
-          <b>Fechas:</b>
-          <ng-container *ngIf="editId === b.id; else viewDates">
-            <mat-form-field appearance="outline">
-              <mat-label>Fecha de inicio</mat-label>
-              <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="editBooking.startDate" name="editStartDate" required [min]="today" [matDatepickerFilter]="dateFilter" />
-              <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
-              <mat-datepicker #pickerInicio></mat-datepicker>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Fecha de fin</mat-label>
-              <input matInput [matDatepicker]="pickerFin" [(ngModel)]="editBooking.endDate" name="editEndDate" required [min]="editBooking.startDate || today" [disabled]="!editBooking.startDate" [matDatepickerFilter]="dateFilter" />
-              <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
-              <mat-datepicker #pickerFin></mat-datepicker>
-            </mat-form-field>
+          <div><b>Usuario ID:</b> {{ b.clientId }}</div>
+          <div>
+            <b>Fechas:</b>
+            <ng-container *ngIf="editId === b.id; else viewDates">
+              <mat-form-field appearance="outline">
+                <mat-label>Fecha de inicio</mat-label>
+                <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="editBooking.startDate" name="editStartDate" required [min]="today" [matDatepickerFilter]="dateFilter" />
+                <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+                <mat-datepicker #pickerInicio></mat-datepicker>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Fecha de fin</mat-label>
+                <input matInput [matDatepicker]="pickerFin" [(ngModel)]="editBooking.endDate" name="editEndDate" required [min]="editBooking.startDate || today" [disabled]="!editBooking.startDate" [matDatepickerFilter]="dateFilter" />
+                <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                <mat-datepicker #pickerFin></mat-datepicker>
+              </mat-form-field>
+            </ng-container>
+            <ng-template #viewDates>
+              {{ b.startDate | date }} - {{ b.endDate | date }}
+            </ng-template>
+          </div>
+          <div>
+            <b>Estado:</b>
+            <ng-container *ngIf="editId === b.id; else viewStatus">
+              <mat-form-field appearance="outline">
+                <mat-label>Estado</mat-label>
+                <mat-select [(ngModel)]="editBooking.status" name="editStatus" required>
+                  <mat-option value="Pending">Pendiente</mat-option>
+                  <mat-option value="Confirmed">Confirmada</mat-option>
+                  <mat-option value="Completed">Completada</mat-option>
+                  <mat-option value="Cancelled">Cancelada</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </ng-container>
+            <ng-template #viewStatus>
+              {{ b.status || 'Pendiente' }}
+            </ng-template>
+          </div>
+          <ng-container *ngIf="editId === b.id; else editDeleteBtns">
+            <button mat-button color="primary" (click)="saveEdit()" [disabled]="!editBooking.startDate || !editBooking.endDate || editBooking.endDate < editBooking.startDate || !editBooking.status">Guardar</button>
+            <button mat-button (click)="cancelEdit()">Cancelar</button>
           </ng-container>
-          <ng-template #viewDates>
-            {{ b.startDate | date }} - {{ b.endDate | date }}
+          <ng-template #editDeleteBtns>
+            <button mat-icon-button color="primary" (click)="startEdit(b)"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button color="warn" (click)="deleteBooking(b.id)"><mat-icon>delete</mat-icon></button>
           </ng-template>
         </div>
-        <div>
-          <b>Estado:</b>
-          <ng-container *ngIf="editId === b.id; else viewStatus">
-            <mat-form-field appearance="outline">
-              <mat-label>Estado</mat-label>
-              <mat-select [(ngModel)]="editBooking.status" name="editStatus" required>
-                <mat-option value="Pending">Pendiente</mat-option>
-                <mat-option value="Confirmed">Confirmada</mat-option>
-                <mat-option value="Completed">Completada</mat-option>
-                <mat-option value="Cancelled">Cancelada</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </ng-container>
-          <ng-template #viewStatus>
-            {{ b.status || 'Pendiente' }}
-          </ng-template>
-        </div>
-        <ng-container *ngIf="editId === b.id; else editDeleteBtns">
-          <button mat-button color="primary" (click)="saveEdit()" [disabled]="!editBooking.startDate || !editBooking.endDate || editBooking.endDate < editBooking.startDate || !editBooking.status">Guardar</button>
-          <button mat-button (click)="cancelEdit()">Cancelar</button>
-        </ng-container>
-        <ng-template #editDeleteBtns>
-          <button mat-icon-button color="primary" (click)="startEdit(b)"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button color="warn" (click)="deleteBooking(b.id)"><mat-icon>delete</mat-icon></button>
-        </ng-template>
-      </div>
-    </mat-card>
+      </mat-card>
+    </div>
   `,
   styles: [`
+    .admin-bookings-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 32px 0 48px 0;
+      background: #f5f7fa;
+    }
     .admin-bookings-card {
       max-width: 700px;
+      width: 100%;
       margin: 48px auto 0 auto;
       padding: 32px 24px;
       border-radius: 12px;

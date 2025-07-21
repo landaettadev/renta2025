@@ -1,46 +1,54 @@
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Historial de Reservas por Cliente</mat-card-title>
-  </mat-card-header>
-  
-  <mat-card-content>
-    <form (ngSubmit)="search()" class="booking-history-form" #form="ngForm">
-      <mat-form-field appearance="outline">
-        <mat-label>ID del Cliente</mat-label>
-        <input matInput [(ngModel)]="clientId" name="clientId" type="number" required>
-        <mat-hint>Ingresa el ID del cliente para ver su historial</mat-hint>
-      </mat-form-field>
-      
-      <button mat-raised-button color="primary" type="submit" [disabled]="loading">
-        <mat-icon>search</mat-icon>
-        Buscar Historial
+<div class="max-w-4xl mx-auto p-4">
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+      <svg class="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      Historial de Reservas por Cliente
+    </h2>
+    <form (ngSubmit)="search()" class="flex flex-col sm:flex-row gap-4 items-end mb-4" #form="ngForm">
+      <div class="flex-1">
+        <label class="block text-sm font-medium mb-1">ID del Cliente</label>
+        <input class="input input-bordered w-full border rounded px-3 py-2" [(ngModel)]="clientId" name="clientId" type="number" required placeholder="Ingresa el ID del cliente">
+      </div>
+      <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded shadow flex items-center gap-2 transition" type="submit" [disabled]="loading">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 104.5 4.5a7.5 7.5 0 0012.15 12.15z"/></svg>
+        Buscar
       </button>
     </form>
-    
-    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
-    
-    <div *ngIf="bookings.length > 0 && !loading">
-      <h3>Historial de Reservas</h3>
-      <mat-list>
-        <mat-list-item *ngFor="let booking of bookings">
-          <mat-icon matListItemIcon>event</mat-icon>
-          <div matListItemTitle>Reserva #{{ booking.id }}</div>
-          <div matListItemLine>Vehículo ID: {{ booking.vehicleId }}</div>
-          <div matListItemLine>Estado: {{ booking.status }}</div>
-          <div matListItemLine>
-            {{ booking.startDate | date:'short' }} - {{ booking.endDate | date:'short' }}
+    <div *ngIf="loading" class="w-full"><div class="h-2 bg-blue-100 rounded animate-pulse"></div></div>
+    <div *ngIf="bookings.length > 0 && !loading" class="mt-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div *ngFor="let booking of bookings" class="bg-blue-50 rounded-lg shadow p-4 flex flex-col gap-2 relative">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-lg font-semibold">Reserva #{{ booking.id }}</span>
+            <span [ngClass]="{
+              'bg-green-100 text-green-800': booking.status === 'Confirmada',
+              'bg-orange-100 text-orange-800': booking.status === 'Pendiente',
+              'bg-red-100 text-red-800': booking.status === 'Cancelada'
+            }" class="px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+              {{ booking.status }}
+            </span>
           </div>
-        </mat-list-item>
-      </mat-list>
+          <div class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span class="font-medium">Vehículo:</span> <span class="ml-1">{{ booking.vehicleId }}</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span class="font-medium">Cliente:</span> <span class="ml-1">{{ booking.clientId }}</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-gray-700">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span class="font-medium">Fechas:</span> <span class="ml-1">{{ booking.startDate | date:'short' }} - {{ booking.endDate | date:'short' }}</span>
+          </div>
+        </div>
+      </div>
     </div>
-    
-    <div *ngIf="bookings.length === 0 && searched && !loading && !error">
+    <div *ngIf="bookings.length === 0 && searched && !loading && !error" class="text-center text-gray-500 mt-8">
       <p>No hay reservas para este cliente.</p>
     </div>
-    
-    <div *ngIf="error" class="error">
-      <mat-icon>error</mat-icon>
+    <div *ngIf="error" class="error flex items-center gap-2 mt-4">
+      <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       {{ error }}
     </div>
-  </mat-card-content>
-</mat-card> 
+  </div>
+</div> 

@@ -25,13 +25,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
         </mat-sidenav>
         <mat-sidenav-content>
           <div class="admin-content-center">
-            <mat-card class="admin-dashboard-card shadow-xl rounded-2xl bg-white dark:bg-gray-900 transition-colors duration-300">
-              <div class="flex items-center justify-center gap-2 mb-2">
-                <mat-icon class="text-blue-600 dark:text-blue-400 text-3xl">dashboard</mat-icon>
-                <span class="text-2xl font-bold text-blue-800 dark:text-blue-200">Panel principal</span>
-              </div>
-              <div class="text-gray-500 dark:text-gray-300 mb-6 text-base font-semibold tracking-wide text-center" style="font-size:1.13rem;">Gestiona los recursos principales del sistema</div>
-            </mat-card>
+            <router-outlet></router-outlet>
           </div>
         </mat-sidenav-content>
       </mat-sidenav-container>
@@ -44,7 +38,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
     .sidenav-menu { display: flex; flex-direction: column; gap: 8px; }
     .sidenav-menu a { display: flex; align-items: center; gap: 12px; font-size: 1.08rem; font-weight: 600; color: #333; padding: 12px 18px; border-radius: 8px; text-decoration: none; transition: background 0.18s; }
     .sidenav-menu a.active, .sidenav-menu a:hover { background: #e3e9fc; color: #1976d2; }
-    .admin-content-center { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+    .admin-content-center { display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 32px 0 48px 0; }
     .admin-dashboard-card { width: 100%; max-width: 480px; margin: 0 auto; padding: 32px 24px; border-radius: 18px; text-align: center; background: #fff; display: flex; flex-direction: column; align-items: center; }
     @media (max-width: 900px) {
       .admin-sidenav { width: 100px; padding-top: 16px; }
@@ -53,7 +47,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
     }
     @media (max-width: 600px) {
       .admin-sidenav-container { flex-direction: column; }
-      .admin-content-center { height: auto; min-height: 60vh; }
+      .admin-content-center { min-height: 60vh; padding: 16px 0; }
       .admin-dashboard-card { padding: 12px 4px; }
     }
   `]
