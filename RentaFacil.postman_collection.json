@@ -1,0 +1,285 @@
+{
+  "info": {
+    "_postman_id": "renta-facil-collection-001",
+    "name": "RentaFacil API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Colección de pruebas para los endpoints principales de RentaFacil: vehículos, reservas y clientes."
+  },
+  "item": [
+    {
+      "name": "Vehicles",
+      "item": [
+        {
+          "name": "Registrar vehículo (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "LicensePlate", "value": "ABC123", "type": "text" },
+                { "key": "Brand", "value": "Toyota", "type": "text" },
+                { "key": "Model", "value": "Corolla", "type": "text" },
+                { "key": "Type", "value": "Sedan", "type": "text" },
+                { "key": "IsAvailable", "value": "true", "type": "text" },
+                { "key": "imageFile", "type": "file" }
+              ]
+            },
+            "url": {
+              "raw": "http://localhost:5277/api/vehicles",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5277",
+              "path": ["api", "vehicles"]
+            }
+          }
+        },
+        {
+          "name": "Listar todos los vehículos",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5277/api/vehicles",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5277",
+              "path": ["api", "vehicles"]
+            }
+          }
+        },
+        {
+          "name": "Consultar vehículos disponibles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5277/api/vehicles/available?type=Sedan&startDate=2025-07-21&endDate=2025-07-25",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5277",
+              "path": ["api", "vehicles", "available"],
+              "query": [
+                { "key": "type", "value": "Sedan" },
+                { "key": "startDate", "value": "2025-07-21" },
+                { "key": "endDate", "value": "2025-07-25" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar vehículo (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"licensePlate\": \"ABC123\",\n  \"brand\": \"Toyota\",\n  \"model\": \"Corolla\",\n  \"type\": \"Sedan\",\n  \"isAvailable\": true,\n  \"image\": \"url-imagen.png\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5277/api/vehicles/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5277",
+              "path": ["api", "vehicles", "1"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar vehículo (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "http://localhost:5277/api/vehicles/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5277",
+              "path": ["api", "vehicles", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Crear reserva",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1,\n  \"vehicleId\": 1,\n  \"startDate\": \"2025-07-21\",\n  \"endDate\": \"2025-07-25\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5216/api/bookings",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5216",
+              "path": ["api", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Asignar cliente a reserva",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:5216/api/bookings/assign-client?bookingId=1&clientId=1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5216",
+              "path": ["api", "bookings", "assign-client"],
+              "query": [
+                { "key": "bookingId", "value": "1" },
+                { "key": "clientId", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Cancelar reserva",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservaId\": 1,\n  \"usuarioId\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5216/api/bookings/cancel",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5216",
+              "path": ["api", "bookings", "cancel"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar reserva",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": 1,\n  \"vehicleId\": 1,\n  \"startDate\": \"2025-07-21\",\n  \"endDate\": \"2025-07-25\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5216/api/bookings/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5216",
+              "path": ["api", "bookings", "1"]
+            }
+          }
+        },
+        {
+          "name": "Historial de reservas por cliente",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5216/api/bookings/history/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5216",
+              "path": ["api", "bookings", "history", "1"]
+            }
+          }
+        },
+        {
+          "name": "Historial de reservas con detalles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5216/api/bookings/history/1/details",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5216",
+              "path": ["api", "bookings", "history", "1", "details"]
+            }
+          }
+        },
+        {
+          "name": "Listar todas las reservas (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "http://localhost:5216/api/bookings",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5216",
+              "path": ["api", "bookings"]
+            }
+          }
+        },
+        {
+          "name": "Fechas reservadas de un vehículo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5216/api/bookings/vehicle/1/booked-dates",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5216",
+              "path": ["api", "bookings", "vehicle", "1", "booked-dates"]
+            }
+          }
+        },
+        {
+          "name": "Reservas de un vehículo",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5216/api/bookings/vehicle/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5216",
+              "path": ["api", "bookings", "vehicle", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clients",
+      "item": [
+        {
+          "name": "Actualizar datos de cliente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"3001234567\",\n  \"ciudad\": \"Medellín\",\n  \"direccion\": \"Calle 123 #45-67\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5277/api/clients/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5277",
+              "path": ["api", "clients", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 

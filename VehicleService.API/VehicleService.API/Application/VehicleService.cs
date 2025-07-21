@@ -35,6 +35,21 @@ namespace VehicleService.API.Application
             }).ToList();
         }
 
+        public async Task<List<VehicleDto>> GetAvailableVehiclesAsync()
+        {
+            var vehicles = await _context.Vehicles.Where(v => v.IsAvailable).ToListAsync();
+            return vehicles.Select(v => new VehicleDto
+            {
+                Id = v.Id,
+                LicensePlate = v.LicensePlate,
+                Brand = v.Brand,
+                Model = v.Model,
+                Type = v.Type,
+                IsAvailable = v.IsAvailable,
+                Image = v.Image
+            }).ToList();
+        }
+
         public async Task<bool> DeleteVehicleAsync(int id)
         {
             var vehicle = await _context.Vehicles.FindAsync(id);

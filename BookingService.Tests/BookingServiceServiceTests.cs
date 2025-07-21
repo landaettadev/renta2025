@@ -219,4 +219,53 @@ public class BookingServiceServiceTests
         // Act & Assert
         await Assert.ThrowsAsync<NotFoundException>(() => service.DeleteBookingAsync(9999));
     }
+
+    [Fact]
+    public async Task CrearReservaConFechaInicioEnElPasado_LanzaExcepcion()
+    {
+        var options = new DbContextOptionsBuilder<BookingDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        using var context = new BookingDbContext(options);
+        // Agregar el vehículo existente
+        context.Vehicles.Add(new Vehicle { Id = 10, LicensePlate = "PAST1", Brand = "Test", Model = "Past", Type = "Sedan", IsAvailable = true });
+        context.SaveChanges();
+        var logger = Mock.Of<ILogger<BookingService.API.Application.BookingService>>();
+        var httpFactory = Mock.Of<IHttpClientFactory>();
+        var service = new BookingService.API.Application.BookingService(context, logger, httpFactory);
+        var reserva = new BookingDto
+        {
+            VehicleId = 10,
+            ClientId = 5,
+            StartDate = DateTime.Now.AddDays(-2),
+            EndDate = DateTime.Now.AddDays(2)
+        };
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateBookingAsync(reserva));
+    }
+
+    [Fact]
+    public async Task CrearReservaSinDatosObligatoriosCliente_LanzaExcepcion()
+    {
+        var options = new DbContextOptionsBuilder<BookingDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        using var context = new BookingDbContext(options);
+        // Agregar el vehículo existente
+        context.Vehicles.Add(new Vehicle { Id = 20, LicensePlate = "NODATOS", Brand = "Test", Model = "ND", Type = "Sedan", IsAvailable = true });
+        context.SaveChanges();
+        var logger = Mock.Of<ILogger<BookingService.API.Application.BookingService>>();
+        var httpFactory = Mock.Of<IHttpClientFactory>();
+        var service = new BookingService.API.Application.BookingService(context, logger, httpFactory);
+        // Cliente sin datos obligatorios (ClientId = 0)
+        var reserva = new BookingDto
+        {
+            VehicleId = 20,
+            ClientId = 0, // No se proporciona un cliente válido
+            StartDate = DateTime.Now.AddDays(1),
+            EndDate = DateTime.Now.AddDays(2)
+        };
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => service.CreateBookingAsync(reserva));
+    }
 } 

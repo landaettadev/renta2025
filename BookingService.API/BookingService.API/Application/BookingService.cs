@@ -32,6 +32,14 @@ namespace BookingService.API.Application
             if (bookingDto.StartDate >= bookingDto.EndDate)
                 throw new ArgumentException("La fecha de inicio debe ser menor a la fecha de fin.");
 
+            // Validar que la fecha de inicio no sea en el pasado
+            if (bookingDto.StartDate < DateTime.Now.Date)
+                throw new ArgumentException("No se puede crear una reserva con fecha de inicio en el pasado.");
+
+            // Validar que el cliente es válido
+            if (bookingDto.ClientId <= 0)
+                throw new ArgumentException("Debe proporcionar un cliente válido para la reserva.");
+
             // Validar que el vehículo existe
             var vehicleExists = await _context.Vehicles.AnyAsync(v => v.Id == bookingDto.VehicleId);
             if (!vehicleExists)
