@@ -32,13 +32,13 @@ import { MatSidenavModule } from '@angular/material/sidenav';
     </div>
   `,
   styles: [`
-    .admin-sidenav-container { height: 100vh; }
+    .admin-sidenav-container { height: 100%; }
     .admin-sidenav { width: 260px; background: #f5f7fa; padding-top: 32px; }
     .sidenav-title { font-size: 1.25rem; font-weight: 700; color: #1976d2; margin-bottom: 32px; text-align: center; }
     .sidenav-menu { display: flex; flex-direction: column; gap: 8px; }
     .sidenav-menu a { display: flex; align-items: center; gap: 12px; font-size: 1.08rem; font-weight: 600; color: #333; padding: 12px 18px; border-radius: 8px; text-decoration: none; transition: background 0.18s; }
     .sidenav-menu a.active, .sidenav-menu a:hover { background: #e3e9fc; color: #1976d2; }
-    .admin-content-center { display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 32px 0 48px 0; }
+    .admin-content-center { display: flex; flex-direction: column; align-items: center; padding: 32px 0 48px 0; }
     .admin-dashboard-card { width: 100%; max-width: 480px; margin: 0 auto; padding: 32px 24px; border-radius: 18px; text-align: center; background: #fff; display: flex; flex-direction: column; align-items: center; }
     @media (max-width: 900px) {
       .admin-sidenav { width: 100px; padding-top: 16px; }
@@ -47,7 +47,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
     }
     @media (max-width: 600px) {
       .admin-sidenav-container { flex-direction: column; }
-      .admin-content-center { min-height: 60vh; padding: 16px 0; }
+      .admin-content-center { padding: 16px 0; }
       .admin-dashboard-card { padding: 12px 4px; }
     }
   `]

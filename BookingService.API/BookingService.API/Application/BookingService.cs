@@ -32,6 +32,15 @@ namespace BookingService.API.Application
             if (bookingDto.StartDate >= bookingDto.EndDate)
                 throw new ArgumentException("La fecha de inicio debe ser menor a la fecha de fin.");
 
+            // Validación de cruce de reservas
+            var overlap = await _context.Bookings
+                .AnyAsync(b => b.VehicleId == bookingDto.VehicleId &&
+                               b.EndDate >= bookingDto.StartDate &&
+                               b.StartDate <= bookingDto.EndDate &&
+                               b.Estado != RentaFacil.Shared.EstadoReserva.Cancelada);
+            if (overlap)
+                throw new ArgumentException("El vehículo ya está reservado en el rango seleccionado.");
+
             var booking = new Booking
             {
                 VehicleId = bookingDto.VehicleId,

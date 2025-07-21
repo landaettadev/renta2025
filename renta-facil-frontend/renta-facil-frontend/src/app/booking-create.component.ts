@@ -17,7 +17,18 @@ import { AuthService } from './core/services/auth.service';
 @Component({
   selector: 'app-booking-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatSelectModule, MatOptionModule, MatDatepickerModule, MatNativeDateModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatSelectModule,
+    MatOptionModule,
+    MatDatepickerModule,
+    MatNativeDateModule
+  ],
   template: `
     <mat-card class="booking-create-card">
       <mat-card-title>Reservar Vehículo</mat-card-title>
@@ -39,13 +50,13 @@ import { AuthService } from './core/services/auth.service';
         <div class="form-row">
           <mat-form-field appearance="outline">
             <mat-label>Fecha de inicio</mat-label>
-            <input matInput [matDatepicker]="pickerInicio" name="startDate" [(ngModel)]="booking.startDate" required [min]="today" (dateChange)="onInicioChange()" autocomplete="off" />
+            <input matInput [matDatepicker]="pickerInicio" name="startDate" [(ngModel)]="booking.startDate" required [min]="todayDate" (dateChange)="onInicioChange()" autocomplete="off" [matDatepickerFilter]="dateFilter" />
             <mat-datepicker-toggle matSuffix [for]="pickerInicio"></mat-datepicker-toggle>
             <mat-datepicker #pickerInicio></mat-datepicker>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Fecha de fin</mat-label>
-            <input matInput [matDatepicker]="pickerFin" name="endDate" [(ngModel)]="booking.endDate" required [min]="minDevolucion" autocomplete="off" />
+            <input matInput [matDatepicker]="pickerFin" name="endDate" [(ngModel)]="booking.endDate" required [min]="minDevolucion" autocomplete="off" [matDatepickerFilter]="dateFilter" />
             <mat-datepicker-toggle matSuffix [for]="pickerFin"></mat-datepicker-toggle>
             <mat-datepicker #pickerFin></mat-datepicker>
             <mat-error *ngIf="booking.endDate && booking.startDate && booking.endDate < booking.startDate">
@@ -58,6 +69,15 @@ import { AuthService } from './core/services/auth.service';
         <div *ngIf="success" class="success">Reserva creada exitosamente.</div>
         <div *ngIf="error" class="error">{{ error }}</div>
       </form>
+      <div class="calendar-separator"></div>
+      <div class="calendar-availability-section">
+        <div class="calendar-availability-msg">🗓️ Revisa la disponibilidad del artículo</div>
+        <mat-calendar [selected]="todayDate" [startAt]="todayDate" [dateClass]="dateClass" [dateFilter]="calendarDateFilter"></mat-calendar>
+        <div class="calendar-legend">
+          <span class="legend-box occupied"></span> Ocupado
+          <span class="legend-box free"></span> Libre
+        </div>
+      </div>
     </mat-card>
   `,
   styles: [`
@@ -117,6 +137,76 @@ import { AuthService } from './core/services/auth.service';
     }
     .success { color: #388e3c; margin-top: 16px; font-weight: 600; }
     .error { color: #d32f2f; margin-top: 16px; font-weight: 600; }
+    .calendar-separator {
+      height: 32px;
+    }
+    .calendar-availability-section {
+      margin-top: 0;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .calendar-availability-msg {
+      font-size: 1.08rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1976d2;
+    }
+    .calendar-legend {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      margin-top: 8px;
+      font-size: 0.98rem;
+    }
+    .legend-box {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .legend-box.occupied {
+      background: #ffeaea;
+      border: 1.5px solid #d32f2f;
+    }
+    .legend-box.free {
+      background: #e3fcef;
+      border: 1.5px solid #388e3c;
+    }
+    .calendar-occupied .mat-calendar-body-cell-content {
+      background: #ffeaea !important;
+      color: #d32f2f !important;
+      border-radius: 50%;
+      position: relative;
+      font-weight: bold;
+      text-decoration: line-through;
+      box-shadow: 0 0 0 2px #d32f2f33;
+    }
+    .calendar-strikethrough .mat-calendar-body-cell-content::after {
+      content: '';
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      top: 50%;
+      height: 2px;
+      background: #d32f2f;
+      transform: translateY(-50%);
+      z-index: 2;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+    .calendar-availability-section mat-calendar {
+      margin: 0 auto;
+      display: block;
+      max-width: 340px;
+      min-width: 260px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 8px 0 8px 0;
+    }
   `]
 })
 export class BookingCreateComponent implements OnInit {
@@ -126,12 +216,13 @@ export class BookingCreateComponent implements OnInit {
   error = '';
   success = false;
   selectedVehicle: Vehicle | null = null;
-  today = new Date().toISOString().slice(0, 10);
+  todayDate: Date = new Date();
   existingBookings: any[] = [];
   overlapWarning: string = '';
+  reservedDates: Set<string> = new Set();
 
   get minDevolucion() {
-    return this.booking.startDate ? this.booking.startDate : this.today;
+    return this.booking.startDate ? this.booking.startDate : this.todayDate;
   }
 
   onInicioChange() {
@@ -188,10 +279,20 @@ export class BookingCreateComponent implements OnInit {
     this.bookingService.getByVehicle(vehicleId).subscribe({
       next: (bookings) => {
         this.existingBookings = bookings;
+        // Generar set de fechas reservadas (YYYY-MM-DD)
+        this.reservedDates = new Set();
+        bookings.forEach(b => {
+          const start = new Date(b.startDate);
+          const end = new Date(b.endDate);
+          for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+            this.reservedDates.add(d.toISOString().slice(0, 10));
+          }
+        });
         this.checkOverlap();
       },
       error: () => {
         this.existingBookings = [];
+        this.reservedDates = new Set();
       }
     });
   }
@@ -214,6 +315,10 @@ export class BookingCreateComponent implements OnInit {
   create() {
     if (!this.auth.isLoggedIn()) {
       this.router.navigate(['/login']);
+      return;
+    }
+    if (!this.booking.startDate || !this.booking.endDate) {
+      this.error = 'Debes seleccionar una fecha de inicio y una de fin.';
       return;
     }
     this.checkOverlap();
@@ -242,5 +347,29 @@ export class BookingCreateComponent implements OnInit {
         this.error = err.error || 'Error al crear la reserva.';
       }
     });
+  }
+
+  // Filtro para bloquear días reservados en el calendario
+  dateFilter = (d: Date | null): boolean => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    if (!d || d < today) return false;
+    const iso = d.toISOString().slice(0, 10);
+    return !this.reservedDates.has(iso);
+  }
+
+  // Filtro para bloquear días pasados y marcar ocupados en el calendario de disponibilidad
+  calendarDateFilter = (d: Date | null): boolean => {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    if (!d || d < today) return false;
+    return true;
+  }
+
+  // Función para marcar los días ocupados en el calendario
+  dateClass = (d: Date) => {
+    const iso = d.toISOString().slice(0, 10);
+    if (this.reservedDates.has(iso)) return 'calendar-occupied calendar-strikethrough';
+    return '';
   }
 } 

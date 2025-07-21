@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
+import { tap } from 'rxjs/operators';
 
 export interface JwtPayload {
   sub: string;
@@ -23,7 +24,21 @@ export class AuthService {
   constructor(private http: HttpClient, private router: Router) {}
 
   login(email: string, password: string): Observable<any> {
-    return this.http.post(`${environment.apiVehicle.replace('/api/vehicles','')}/api/auth/login`, { email, password });
+    return this.http.post(`${environment.apiVehicle.replace('/api/vehicles','')}/api/auth/login`, { email, password }).pipe(
+      // Interceptar la respuesta para guardar los datos personales correctamente
+      tap((res: any) => {
+        if (res && res.token && res.usuario) {
+          const datos = res.usuario.datosPersonales || {};
+          // Mapeo flexible para claves mayúsculas/minúsculas
+          const datosPersonales = {
+            phone: datos.phone || datos.Phone || datos.celular || '',
+            ciudad: datos.ciudad || datos.Ciudad || '',
+            direccion: datos.direccion || datos.Direccion || ''
+          };
+          this.setToken(res.token, datosPersonales, res.usuario.clientId, res.usuario.Id);
+        }
+      })
+    );
   }
 
   register(nombre: string, email: string, password: string, celular: string, ciudad: string, direccion: string): Observable<any> {
