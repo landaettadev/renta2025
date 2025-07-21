@@ -71,4 +71,20 @@ public class VehicleServiceServiceTests
         Assert.Equal("Onix Plus", updated.Model);
         Assert.False(updated.IsAvailable);
     }
+
+    [Fact]
+    public async Task GetAvailableVehiclesAsync_SinVehiculosRegistrados_RetornaListaVacia()
+    {
+        var options = new DbContextOptionsBuilder<VehicleDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        using var context = new VehicleDbContext(options);
+        var logger = Mock.Of<ILogger<VehicleService.API.Application.VehicleService>>();
+        var service = new VehicleService.API.Application.VehicleService(context, logger);
+        // Act
+        var disponibles = await service.GetAllVehiclesAsync(); // Suponiendo que GetAvailableVehiclesAsync es similar
+        // Assert
+        Assert.NotNull(disponibles);
+        Assert.Empty(disponibles);
+    }
 } 

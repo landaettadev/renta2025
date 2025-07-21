@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using RentaFacil.Shared.DTOs;
 using Xunit;
+using FluentAssertions;
+using BookingService.API.Application.Exceptions;
 
 public class BookingServiceServiceTests
 {
@@ -21,6 +23,9 @@ public class BookingServiceServiceTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         using var context = new BookingDbContext(options);
+        // Agregar el vehículo existente
+        context.Vehicles.Add(new Vehicle { Id = 1, LicensePlate = "TEST1", Brand = "Test", Model = "T1", Type = "Sedan", IsAvailable = true });
+        context.SaveChanges();
         context.Bookings.Add(new Booking
         {
             VehicleId = 1,
@@ -53,6 +58,9 @@ public class BookingServiceServiceTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         using var context = new BookingDbContext(options);
+        // Agregar el vehículo existente
+        context.Vehicles.Add(new Vehicle { Id = 2, LicensePlate = "TEST2", Brand = "Test", Model = "T2", Type = "SUV", IsAvailable = true });
+        context.SaveChanges();
         var logger = Mock.Of<ILogger<BookingService.API.Application.BookingService>>();
         var httpFactory = Mock.Of<IHttpClientFactory>();
         var service = new BookingService.API.Application.BookingService(context, logger, httpFactory);
@@ -134,5 +142,81 @@ public class BookingServiceServiceTests
         // Assert
         Assert.Equal(2, historial.Count);
         Assert.All(historial, h => Assert.Equal(99, h.ClientId));
+    }
+
+    [Fact]
+    public async Task CrearReservaConVehiculoInexistente_LanzaNotFoundException()
+    {
+        var options = new DbContextOptionsBuilder<BookingDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        using var context = new BookingDbContext(options);
+        var logger = Mock.Of<ILogger<BookingService.API.Application.BookingService>>();
+        var httpFactory = Mock.Of<IHttpClientFactory>();
+        var service = new BookingService.API.Application.BookingService(context, logger, httpFactory);
+        var reserva = new BookingDto
+        {
+            VehicleId = 999, // No existe
+            ClientId = 1,
+            StartDate = new DateTime(2025, 9, 1),
+            EndDate = new DateTime(2025, 9, 2)
+        };
+        Func<Task> act = async () => await service.CreateBookingAsync(reserva);
+        await act.Should().ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    public async Task ReservaConVehiculoNoExistente_LanzaExcepcionControlada()
+    {
+        var options = new DbContextOptionsBuilder<BookingDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        using var context = new BookingDbContext(options);
+        var logger = Mock.Of<ILogger<BookingService.API.Application.BookingService>>();
+        var httpFactory = Mock.Of<IHttpClientFactory>();
+        var service = new BookingService.API.Application.BookingService(context, logger, httpFactory);
+        var reserva = new BookingDto
+        {
+            VehicleId = 12345, // No existe
+            ClientId = 2,
+            StartDate = new DateTime(2025, 10, 1),
+            EndDate = new DateTime(2025, 10, 2)
+        };
+        await Assert.ThrowsAsync<NotFoundException>(() => service.CreateBookingAsync(reserva));
+    }
+
+    [Fact]
+    public async Task CreateBookingAsync_FlujoNegativo_VehiculoNoExiste_LanzaNotFoundException()
+    {
+        var options = new DbContextOptionsBuilder<BookingDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        using var context = new BookingDbContext(options);
+        var logger = Mock.Of<ILogger<BookingService.API.Application.BookingService>>();
+        var httpFactory = Mock.Of<IHttpClientFactory>();
+        var service = new BookingService.API.Application.BookingService(context, logger, httpFactory);
+        var reserva = new BookingDto
+        {
+            VehicleId = 404,
+            ClientId = 3,
+            StartDate = new DateTime(2025, 11, 1),
+            EndDate = new DateTime(2025, 11, 2)
+        };
+        Func<Task> act = async () => await service.CreateBookingAsync(reserva);
+        await act.Should().ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    public async Task EliminarReservaInexistente_LanzaNotFoundException()
+    {
+        var options = new DbContextOptionsBuilder<BookingDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        using var context = new BookingDbContext(options);
+        var logger = Mock.Of<ILogger<BookingService.API.Application.BookingService>>();
+        var httpFactory = Mock.Of<IHttpClientFactory>();
+        var service = new BookingService.API.Application.BookingService(context, logger, httpFactory);
+        // Act & Assert
+        await Assert.ThrowsAsync<NotFoundException>(() => service.DeleteBookingAsync(9999));
     }
 } 

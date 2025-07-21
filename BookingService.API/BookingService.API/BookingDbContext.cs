@@ -10,5 +10,6 @@ namespace BookingService.API
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Client> Clients { get; set; }
         public DbSet<BookingHistory> BookingHistories { get; set; }
+        public DbSet<Vehicle> Vehicles { get; set; }
     }
 } 

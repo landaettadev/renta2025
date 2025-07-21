@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Text.Json;
+using BookingService.API.Application.Exceptions;
 
 namespace BookingService.API.Application
 {
@@ -30,6 +31,11 @@ namespace BookingService.API.Application
             // Validación básica
             if (bookingDto.StartDate >= bookingDto.EndDate)
                 throw new ArgumentException("La fecha de inicio debe ser menor a la fecha de fin.");
+
+            // Validar que el vehículo existe
+            var vehicleExists = await _context.Vehicles.AnyAsync(v => v.Id == bookingDto.VehicleId);
+            if (!vehicleExists)
+                throw new NotFoundException($"El vehículo con ID {bookingDto.VehicleId} no existe.");
 
             // Validación de cruce de reservas
             var overlap = await _context.Bookings
@@ -199,6 +205,15 @@ namespace BookingService.API.Application
                         b.Estado == RentaFacil.Shared.EstadoReserva.Cancelada ? "Cancelled" :
                         b.Estado == RentaFacil.Shared.EstadoReserva.Completada ? "Completed" : ""
             }).ToList();
+        }
+
+        public async Task DeleteBookingAsync(int bookingId)
+        {
+            var booking = await _context.Bookings.FindAsync(bookingId);
+            if (booking == null)
+                throw new NotFoundException($"La reserva con ID {bookingId} no existe.");
+            _context.Bookings.Remove(booking);
+            await _context.SaveChangesAsync();
         }
     }
 } 
