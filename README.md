@@ -62,8 +62,8 @@ RentaFácil S.A.S. es una empresa de alquiler de vehículos que necesita una sol
 >
 > - Si necesitas conectarte a la base de datos o a los servicios desde tu equipo, **asegúrate de que tu IP pública esté permitida en el firewall de Azure**.
 > - Si recibes errores de conexión, revisa primero este punto.
-> - Para solicitar acceso, contacta al administrador del recurso o sigue la guía de [Configuración de Firewall en Azure](https://learn.microsoft.com/es-es/azure/azure-sql/database/firewall-configure).
-> - **No compartas tus credenciales ni expongas recursos a IPs desconocidas.**
+> - Para solicitar acceso, contacta al  usuario administrador del recurso  Brandon Landaetta
+
 
 ---
 
@@ -320,13 +320,7 @@ networks:
 
 ### Diagramas
 - **Arquitectura del Sistema**: Incluido (`diagrama.png`)
-- **Diagrama de Base de Datos**: Pendiente
-- **Flujo de Usuario**: Pendiente
 
-### Guías
-- **Desarrollo Local**: Este README
-- **Despliegue**: Pendiente
-- **Troubleshooting**: Pendiente
 
 ## 🤝 Contribución
 
@@ -336,35 +330,12 @@ networks:
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abrir un Pull Request
 
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.md) para detalles.
 
 ## 👥 Autores
 
-- **Desarrollador**: [Tu Nombre]
-- **Fecha**: Julio 2025
+- **Desarrollador**: Brandon Landaetta Arboleda
+- **Fecha**: 20 Julio 2025
 - **Versión**: 1.0.0
-
-## 🎯 Estado del Proyecto
-
-### ✅ Completado
-- [x] Backend con microservicios
-- [x] Frontend con Angular 18+
-- [x] Base de datos Azure SQL
-- [x] APIs REST con Swagger
-- [x] Arquitectura Clean Architecture
-- [x] Principios SOLID aplicados
-- [x] Patrones de diseño implementados
-- [x] Git con commits organizados
-
-### ⏳ Pendiente
-- [ ] Postman Collection
-- [ ] Análisis de cobertura de código
-- [ ] Despliegue en Azure DevOps
-- [ ] Documentación de diagramas
-- [ ] Docker Compose
-- [ ] Tests unitarios completos 
 
 ## 📊 Fine Code Coverage
 
@@ -378,39 +349,81 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.m
 
 La colección Postman con ejemplos para los endpoints de vehículos, reservas y clientes se encuentra en el archivo `RentaFacil.postman_collection.json` en la raíz del proyecto. Puedes importarla directamente en Postman para probar la API. 
 
-## ☁️ Despliegue en Azure (Teórico y Práctico)
+## ☁️ Despliegue en Azure: AKS y CI/CD (Explicación Teórica)
 
-### Estado actual
-- **Base de datos Azure SQL**: Ya implementada y utilizada por el proyecto. Todas las conexiones y pruebas reales se realizan contra una instancia de Azure SQL Database, con reglas de firewall y seguridad configuradas.
-- **CI/CD (Azure DevOps)**: No implementado aún. El pipeline está descrito de forma teórica, pero no hay integración automática.
-- **AKS (Azure Kubernetes Service)**: No implementado. AKS es el servicio de Kubernetes gestionado por Azure. El despliegue de los microservicios en contenedores está preparado y documentado, pero no se ha realizado en un clúster de AKS real.
+### 1. Empaquetado de Microservicios
+Cada microservicio (BookingService, VehicleService, Worker, Frontend) se empaqueta como una imagen Docker. Las imágenes se construyen localmente o en un pipeline de CI.
 
-### Descripción teórica del despliegue completo
+### 2. Publicación en Azure Container Registry (ACR)
+Se crea un **Azure Container Registry** (ACR) para almacenar las imágenes Docker. Las imágenes se suben a ACR usando `docker push` o tareas automáticas del pipeline.
 
-- **Microservicios**: BookingService, VehicleService, Worker y el Frontend se empaquetan como contenedores Docker.
-- **Azure Container Registry (ACR)**: Las imágenes Docker se almacenarían en un registro privado de Azure.
-- **Azure Kubernetes Service (AKS)**: Se crearía un clúster de Kubernetes (AKS) donde se desplegarían los contenedores usando archivos YAML (Deployment, Service, Ingress).
-- **Azure SQL Database**: La base de datos ya está creada y configurada en Azure, con reglas de firewall para permitir solo el acceso desde AKS y direcciones IP autorizadas.
-- **Azure DevOps (CI/CD)**: Se podría configurar un pipeline que:
-  1. Compile y pruebe el código.
-  2. Construya y suba las imágenes Docker a ACR.
-  3. Despliegue automáticamente los servicios a AKS usando tareas de Azure DevOps.
+### 3. Despliegue en AKS (Azure Kubernetes Service)
+- Se crea un clúster de **AKS** (Kubernetes gestionado por Azure).
+- Se definen archivos YAML de Kubernetes para cada microservicio:
+  - **Deployment**: Define el número de réplicas y la imagen a usar.
+  - **Service**: Expone los pods internamente o externamente.
+  - **Ingress** (opcional): Para enrutar tráfico HTTP/HTTPS a los servicios.
+- Se aplican los manifiestos con `kubectl apply -f <archivo>.yaml` o mediante el pipeline.
+- Se configuran **Secrets** y **ConfigMaps** para las cadenas de conexión y variables sensibles.
+- El clúster se conecta a la base de datos Azure SQL (con firewall configurado para permitir solo el tráfico desde AKS).
 
-### Resumen de pasos
+### 4. CI/CD con Azure DevOps
+- Se crea un **pipeline** en Azure DevOps con los siguientes pasos:
+  1. **Build**: Compila el código y ejecuta pruebas unitarias.
+  2. **Docker Build**: Construye las imágenes Docker de cada microservicio.
+  3. **Push a ACR**: Sube las imágenes a Azure Container Registry.
+  4. **Deploy a AKS**: Usa tareas de Azure DevOps para aplicar los manifiestos YAML y actualizar los servicios en el clúster.
+- El pipeline puede usar variables de entorno y secrets almacenados en Azure Key Vault.
 
-1. **Build y Push de Imágenes**
-   - `docker build` para cada microservicio.
-   - `docker push` a Azure Container Registry.
+### 5. Seguridad y Monitoreo
+- Se configuran reglas de firewall en Azure SQL para aceptar solo conexiones desde el clúster de AKS.
+- Se habilita el monitoreo con Azure Monitor y logs de contenedores.
 
-2. **Despliegue en AKS (Kubernetes en Azure)**
-   - Aplicar archivos YAML de Kubernetes para cada servicio.
-   - Configurar Ingress para exponer el frontend y las APIs.
+---
 
-3. **Base de Datos**
-   - Ya implementada en Azure SQL Database.
-   - Cadenas de conexión y reglas de firewall ya configuradas y en uso.
+### Ejemplo de flujo CI/CD en Azure DevOps (teórico)
 
-4. **CI/CD**
-   - Pipeline en Azure DevOps pendiente de implementación.
+```yaml
+trigger:
+  - main
 
-> **Nota:** El proyecto ya utiliza una base de datos real en Azure SQL. El pipeline CI/CD y el despliegue en AKS (Kubernetes) están documentados como propuesta teórica y no han sido implementados aún por limitaciones de tiempo y recursos. 
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'Build and Test'
+    inputs:
+      command: 'build'
+      projects: '**/*.csproj'
+
+  - task: Docker@2
+    displayName: 'Build and Push Docker Images'
+    inputs:
+      command: 'buildAndPush'
+      repository: '$(ACR_NAME).azurecr.io/bookingservice'
+      dockerfile: 'BookingService.API/BookingService.API/Dockerfile'
+      tags: 'latest'
+
+  # Repetir para cada microservicio...
+
+  - task: Kubernetes@1
+    displayName: 'Deploy to AKS'
+    inputs:
+      connectionType: 'Azure Resource Manager'
+      azureSubscription: '$(AZURE_SUBSCRIPTION)'
+      azureResourceGroup: '$(RESOURCE_GROUP)'
+      kubernetesCluster: '$(AKS_CLUSTER)'
+      namespace: 'default'
+      command: 'apply'
+      arguments: '-f k8s/deployment.yaml'
+```
+
+---
+
+> **Resumen:**
+> - Los microservicios se empaquetan como imágenes Docker y se suben a Azure Container Registry.
+> - Se despliegan en un clúster de AKS usando manifiestos YAML de Kubernetes.
+> - La base de datos Azure SQL se conecta de forma segura al clúster.
+> - Un pipeline de Azure DevOps automatiza el build, test, push y despliegue.
+> - Toda la infraestructura y configuración está preparada para ser gestionada como código y escalar en la nube de Azure. 
