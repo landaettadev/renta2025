@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  bookingservice:
+    build:
+      context: .
+      dockerfile: BookingService.API/BookingService.API/Dockerfile
+    image: bookingservice:latest
+    container_name: bookingservice
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=BookingDb;User=sa;Password=Your_password123;
+    depends_on:
+      - db
+    networks:
+      - rentafacilnet
+
+  vehicleservice:
+    build:
+      context: .
+      dockerfile: VehicleService.API/VehicleService.API/Dockerfile
+    image: vehicleservice:latest
+    container_name: vehicleservice
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=VehicleDb;User=sa;Password=Your_password123;
+    depends_on:
+      - db
+    networks:
+      - rentafacilnet
+
+  worker:
+    build:
+      context: .
+      dockerfile: RentaFacil.Worker/RentaFacil.Worker/Dockerfile
+    image: rentafacilworker:latest
+    container_name: rentafacilworker
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=WorkerDb;User=sa;Password=Your_password123;
+    depends_on:
+      - db
+    networks:
+      - rentafacilnet
+
+  frontend:
+    build: ./renta-facil-frontend/renta-facil-frontend
+    image: rentafacilfrontend:latest
+    container_name: rentafacilfrontend
+    ports:
+      - "4200:80"
+    networks:
+      - rentafacilnet
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: rentafacildb
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Your_password123
+    ports:
+      - "1433:1433"
+    networks:
+      - rentafacilnet
+    healthcheck:
+      test: ["CMD-SHELL", "sqlcmd -S localhost -U sa -P Your_password123 -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  rentafacilnet:
+    driver: bridge 
