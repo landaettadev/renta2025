@@ -1,8 +1,7 @@
-# Prueba Técnica
 
 **Junio 2025**
 
-## Detalle de Prueba Técnica
+## Detalle 
 
 **Objetivo:**
 Construir un sistema básico para la gestión de reservas de vehículos, aplicando buenas prácticas de desarrollo, principios de arquitectura, uso de microservicios, SQL Server, C# .NET, Angular, integración con Azure y uso de Git.
